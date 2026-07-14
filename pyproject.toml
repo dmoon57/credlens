@@ -32,6 +32,8 @@ dev = [
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+# docs/ holds preserved research artifacts (the throwaway POC) — provenance, not project source
+extend-exclude = ["docs"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,0 +1,52 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run ruff check .
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run pytest
+
+  # Eval gate — becomes the release floor once the evals harness lands (Phase 1).
+  # It will fail the build on any precision/recall regression below the last-release floor.
+  eval-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: eval harness pending (Phase 1)
+        run: |
+          if [ -f Makefile ] && grep -q '^eval-ci:' Makefile; then
+            make eval-ci
+          else
+            echo "Eval harness not built yet — this gate goes live in Phase 1."
+          fi
+
+  # Eval integrity — corpus labels and detector code must never change together.
+  # Label edits carry their own justification; pairing them with detector edits is
+  # the eval equivalent of modifying a test to make it pass.
+  eval-integrity:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: forbid label + detector changes in the same PR
+        run: |
+          CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.sha }})
+          echo "$CHANGED"
+          LABELS=$(echo "$CHANGED" | grep -c '^corpus/labels' || true)
+          CHECKS=$(echo "$CHANGED" | grep -c '^src/credlens/checks/' || true)
+          if [ "$LABELS" -gt 0 ] && [ "$CHECKS" -gt 0 ]; then
+            echo "::error::PR touches corpus/labels* AND src/credlens/checks/ together — split it."
+            exit 1
+          fi

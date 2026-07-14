@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# Env & secrets — never committed
+.env
+.env.*
+*.pem
+*.key
+
+# Scan working dirs (corpus clones are re-fetched, never committed)
+corpus/servers/
+.scan-cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/

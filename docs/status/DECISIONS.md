@@ -2,7 +2,7 @@
 type: status
 title: "credlens — decisions"
 created_date: 2026-07-14
-last_modified: 2026-07-14 18:02 PDT
+last_modified: 2026-07-14 19:58 PDT
 ---
 
 # Decisions
@@ -31,3 +31,17 @@ last_modified: 2026-07-14 18:02 PDT
   fields (`this.secret`) or across function/method boundaries are documented known-misses
   (`interprocedural` scope, the `cross-function-hop` class + `aliased_class_method`
   fixture), reported not gated.
+- **2026-07-14 · Hosted results are ephemeral; the share URL is a pointer, not an archive**
+  (codex round 1, finding 6). A persistent GET-servable page of machine findings about a named
+  repo is publication of unverified allegations — CLAUDE.md invariant 5 outranks the plan's
+  "shareable findings page" phrasing. `/scan/{owner}/{repo}` renders a click-to-run card; results
+  are `no-store`, banner-marked unverified; the internal cache is cost control only (POST-gated,
+  TTL 24 h, revalidate-public before serve). Verified-findings curation is post-v1. See
+  [../specs/hosted-scan.md](../specs/hosted-scan.md) §Result policy.
+- **2026-07-14 · Hosted worker isolation: env-scrubbed subprocess, not a second deployment**
+  (negotiated from codex finding 4). Extraction + parsing run in a killable subprocess with an
+  empty environment; the parent holds the only secret (Upstash token, ACL-scoped to cache/quota
+  keys). Residual — same-uid /proc reach from a native RCE — documented in the spec's T7 and
+  re-examined at the `/cso` gate; fallback stands if rejected.
+- **2026-07-14 · Hosted concurrency: `fluid: false` + per-request detector instances** (codex
+  finding 2). The detectors mutate internal state during a scan; correctness before concurrency.

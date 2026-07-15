@@ -2,7 +2,7 @@
 type: status
 title: "credlens — tasks"
 created_date: 2026-07-14
-last_modified: 2026-07-14 18:27 PDT
+last_modified: 2026-07-14 19:58 PDT
 ---
 
 # Tasks
@@ -37,8 +37,19 @@ last_modified: 2026-07-14 18:27 PDT
 - [ ] Optional recall lift: embedded-cred URLs (DATABASE_URL class) · scoped exfil-host check
 
 ## Phase 3 — Hosted scan-by-URL
-- [ ] Threat model (before building) — see plan §Phase 3
-- [ ] Deploy behind security review gate (fallback: static demo)
+- [x] 3.1a Threat model + spec (before building) — [specs/hosted-scan.md](../specs/hosted-scan.md)
+- [x] 3.1b Codex gate round 1: REVISE, 21 findings, all accepted (1 negotiated) → spec v2
+  (see [REVIEW_NOTES.md](REVIEW_NOTES.md))
+- [ ] 3.1c Codex round 2 convergence pass on spec v2 → APPROVE before build code
+- [ ] 3.2a Runtime probe, Deployment-Protection-enabled: wheel imports, worker kill semantics,
+  /tmp, fluid:false, maxDuration, T11 upstream matrix. Kill criterion: probe fails ⇒ fallback
+- [ ] 3.2b Scan core, local: shared `scan.py` walker factor-out + `hosted/` fetch/streamed-extract/
+  limits/worker, TDD against adversarial fixtures — no network in tests
+- [ ] 3.3 Web surface, local: handler contract + static pages/assets + atomic quotas +
+  XSS/CSP/MIME tests; `vercel dev` smoke
+- [ ] 3.4 Gated deploy: protected preview (asserted) → deployed-surface tests → full `/cso` →
+  operator approval → WAF + spend caps → public alias + README link
+- [ ] Fallback if any gate fails: static demo of pre-scanned reports (always green)
 
 ## Phase 4 — Ecosystem scan + write-ups
 - [ ] Launch post draft (no build dependency — any day)

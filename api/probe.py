@@ -23,6 +23,7 @@ import sys
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler
 
@@ -147,8 +148,10 @@ def _check_codeload_matrix() -> dict:
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        # header or ?token= (browser path behind Vercel Auth); throwaway probe credential
         expected = os.environ.get("PROBE_TOKEN", "")
-        got = self.headers.get("X-Probe-Token", "")
+        qs = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path or "").query)
+        got = self.headers.get("X-Probe-Token") or (qs.get("token") or [""])[0]
         if not expected or not hmac.compare_digest(expected, got):
             self._respond(403, {"error": "forbidden"})
             return
@@ -167,6 +170,7 @@ class handler(BaseHTTPRequestHandler):
                 report["checks"][name] = {"ok": True, "result": fn()}
             except Exception as e:  # noqa: BLE001 — a failing check is the finding
                 report["checks"][name] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
+        print("PROBE_REPORT " + json.dumps(report))  # mirrored to function logs for `vercel logs`
         self._respond(200, report)
 
     def _respond(self, status: int, body: dict):

@@ -3,7 +3,7 @@ type: spec
 title: "Hosted scan-by-URL (Phase 3)"
 status: active
 created_date: 2026-07-14
-last_modified: 2026-07-14 20:15 PDT
+last_modified: 2026-07-14 20:42 PDT
 tags: [mcp, security, deploy, vercel, threat-model]
 ---
 
@@ -14,9 +14,11 @@ scan → findings for the requester. **This tool audits other people's security;
 the first thing a security-literate audience will probe.** The threat model below was written
 before any build code, and every mitigation in it is an acceptance criterion.
 
-> **v3 (2026-07-14).** Codex round 1: REVISE, 21 findings → v2. Codex round 2: 12 resolved,
-> 8 partial, 8 new (2 blocking), negotiated worker isolation accepted-for-v1 with conditions →
-> this v3. Deltas: publication semantics formalized as [ADR-0003](../adr/0003-hosted-output-publication-semantics.md)
+> **v3.1 (2026-07-14).** Codex round 1: REVISE, 21 findings → v2. Codex round 2: 12 resolved,
+> 9 partial, 8 new (2 blocking), negotiated worker isolation accepted-for-v1 with conditions →
+> v3. Codex round 3: **APPROVE-WITH-CHANGES** — 7 should-fix + 2 nits, folded here as v3.1
+> (atomic admission transition, redaction-last assembly, status→error matrix, coverage-on-success
+> semantics, combined output caps, full Bidi_Control set, schema-file deliverable). Gate closed. Deltas: publication semantics formalized as [ADR-0003](../adr/0003-hosted-output-publication-semantics.md)
 > + plan amendment; request-level admission before any cache/revalidation work; parent-boundary
 > framing and validation of everything the worker or Redis returns; per-file progress deadline;
 > explicit gzip metering boundary; lease/WAF/spend/body-cap numbers; revalidation state machine;
@@ -49,12 +51,16 @@ workflow (post-v1; until it exists, only ephemeral results).
   limits, methodology) with an explicit **"Run scan" click** — it never auto-runs or auto-displays.
   Results render only after the visitor's own admitted POST, `Cache-Control: no-store`, under a
   fixed banner: *automated, unverified results; strings below derive from the scanned repository*.
-- **Hosted redaction boundary (r2 #7).** The `Finding` schema has no snippet field and none may be
-  added for hosted use — but `message`/`file` are arbitrary strings and least-priv messages embed
-  raw repo values. So the hosted serializer (parent-side, §Worker boundary) additionally **redacts
-  token-shaped and high-entropy substrings** (the detector's own source-shape rules, reused) from
-  every outbound string field and enforces per-field byte caps. Test: a live-shaped token planted
-  in an OAuth scope value never appears in response JSON.
+- **Hosted redaction boundary (r2 #7, r3 #2).** The `Finding` schema has no snippet field and none
+  may be added for hosted use — but `message`/`file` are arbitrary strings and least-priv messages
+  embed raw repo values. So the parent **assembles the complete response first** (findings +
+  inventory + coverage manifest — skipped-file paths included), then **redacts token-shaped and
+  high-entropy substrings** (the detector's own source-shape rules, reused) from **every
+  repository-derived string field**, with service-generated metadata (`digest`, `scanned_at`,
+  `schema`, counts) explicitly exempt so redaction can't eat its own bookkeeping; then final
+  per-field byte caps, then serialize/cache. Redaction is the last transform before caps — nothing
+  repo-derived is appended after it. Test: a live-shaped token planted in an OAuth scope value
+  never appears in response JSON.
 - **Internal cache = cost control, never publication:** keyed `casefold(owner)/casefold(repo)`,
   TTL **24 h**, value records tarball sha256 + scan time (digest + time displayed); only ever
   served into an admitted POST response, after revalidation:
@@ -126,12 +132,15 @@ POST /api/scan
   → request admission FIRST (method/headers/body caps + atomic request-rate limit, §Interface)
   → parse & canonicalize owner/repo (one parser, ASCII, casefold for keys)
   → cache lookup (hit ⇒ revalidate [60 s memo, state machine] ⇒ serve, no-store)
-  → in-flight check (per-repo lease held ⇒ 202 + Retry-After, NO scan-budget charge)
-  → atomic scan-budget admission (per-IP 10/h + global 200/day, one Lua script, fail closed)
-  → acquire per-repo single-flight + global active-scan lease (owner-token'd, TTL'd)
+  → ONE atomic Lua admission transition (r3 #1 — in-flight check + per-IP 10/h + global 200/day
+    + active-scan cap + lease acquisition as a single Redis transition) returning exactly one of:
+    leader (quota charged, leases held) | follower (202, UNCHARGED) | rate_limited | busy
+    — fail closed on Upstash error
   → codeload fetch (pinned host, redirects refused, streamed byte cap, proxy-blind opener)
   → worker subprocess (scrubbed env, own pgroup): metered extract → scan_tree → framed result
-  → parent: validate frame → redact → coverage manifest + caps → cache put (TTL 24 h)
+  → parent: validate frame → ASSEMBLE the complete response (findings + inventory + coverage)
+    → redact every repository-derived string field (service-generated metadata — digest,
+    scanned_at, schema — exempt; r3 #2) → enforce final caps → serialize → cache put (TTL 24 h)
   → response (no-store)   [finally: release leases by owner token, remove tmpdir]
 ```
 
@@ -156,15 +165,15 @@ Every row is binding: a mitigation here is a test or a config, not a hope.
 | T2 | Resource bombs | gzip bomb, monster repo, 10⁶ files, link farms | Streamed download aborts over **30 MB compressed**; **explicit metering boundary (r2 #11):** raw stream → compressed-byte counter (30 MB cap) → `gzip.GzipFile` → **decompressed-byte counter that raises at 150 MB** → `tarfile.open(mode="r|", fileobj=…)` — the tar layer only ever sees capped, already-metered plaintext; never `getmembers()`/blind `extractall()`; caps: written file bytes **100 MB**, members **5 000**, per-file **1 MB**, name length **512**, duplicate resolved paths rejected; **any over-cap member aborts the whole archive**; **45 s scan wall-clock** inside one monotonic end-to-end deadline; worker RSS cap | Burst CPU within one invocation, bounded by timeout |
 | T3 | Path traversal / link escape | hostile member paths, symlink/hardlink members | `tarfile.data_filter` **wrapped in a stricter policy: only directories and regular files accepted — every symlink, hardlink, sparse/special/unknown type rejected**; extraction into the parent-owned per-request tmpdir; walker uses `lstat`-based checks, never follows links | None known; adversarial fixtures prove it |
 | T4 | Parser hang / native crash | pathological source files | Two enforceable tiers: **per-file progress deadline (5 s) + whole-scan deadline**, both parent-enforced via the worker progress stream and process-group kill; Python exceptions skip one file into the coverage manifest; **native death / stall-kill fails the scan and is never cached as complete**; **parse-only — target code never executes** | Native crash DoSes one request, never poisons results |
-| T5 | **XSS in findings view** | rendered strings originate in the scanned repo | Findings travel as **JSON only** (`application/json; charset=utf-8` + `nosniff` on **every** status); page renders **exclusively via `textContent`**; no inline script/style — external assets only; **CSP delivered as an HTTP header via vercel.json on every route** (`default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`) + `X-Frame-Options: DENY`; **control & bidi chars (C0/C1, LRO/RLO/LRI/RLI/FSI/PDI/PDF, zero-width) visibly escaped as codepoint sequences before display** (r2 #13 — `textContent` + CSS `unicode-bidi: isolate` handle direction, escaping handles visibility); bidi/control fixture asserted via DOM | XSS requires both a renderer bug **and** a CSP bypass |
-| T6 | Abuse / cost DoS | scripted floods, cross-site amplification, cache-hit floods | **Request-level admission before any work (r2 new #1): atomic 60 POST/h/IP** limit ahead of cache/revalidation; scan budget (**10/h/IP + 200/day global**) charged **only on cache miss after the in-flight check**; all counters in **atomic Lua** (check+incr+expire, fail closed); POST-only + `application/json` + `X-Credlens-Scan: 1` + `Sec-Fetch-Site` same-origin/absent + **no CORS**; IP = **`x-vercel-forwarded-for` only**, `ipaddress`-parsed, IPv6 quota'd at /64, fail closed if absent; **leases (r2 #16): global active-scan cap 2, per-repo single-flight, TTL 90 s, random owner token, compare-and-delete release, no renewal (deadline < TTL)**; followers get **202 `{"status":"in-flight","retryAfter":5}` + `Retry-After: 5`, uncharged** (r2 new #4); cache makes repeats cheap | Post-cap request-layer spend bounded by WAF + spend caps (numbers below) |
+| T5 | **XSS in findings view** | rendered strings originate in the scanned repo | Findings travel as **JSON only** (`application/json; charset=utf-8` + `nosniff` on **every** status); page renders **exclusively via `textContent`**; no inline script/style — external assets only; **CSP delivered as an HTTP header via vercel.json on every route** (`default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`) + `X-Frame-Options: DENY`; **control & bidi chars visibly escaped as codepoint sequences before display — the full Unicode `Bidi_Control` set (LRE/RLE/LRO/RLO/PDF/LRI/RLI/FSI/PDI/ALM/LRM/RLM) plus C0/C1 and zero-width (r2 #13, r3 nit)**; `textContent` + CSS `unicode-bidi: isolate` handle direction, escaping handles visibility; bidi/control fixture (covering an embedding control, e.g. LRE, not just overrides) asserted via DOM | XSS requires both a renderer bug **and** a CSP bypass |
+| T6 | Abuse / cost DoS | scripted floods, cross-site amplification, cache-hit floods | **Request-level admission before any work (r2 new #1): atomic 60 POST/h/IP** limit ahead of cache/revalidation; on cache miss, **one atomic Lua transition (r3 #1)** combines in-flight detection + scan budget (**10/h/IP + 200/day global**) + **active-scan cap 2** + per-repo single-flight lease acquisition, returning exactly one of `leader` (charged, leases held) / `follower` (202, uncharged) / `rate_limited` / `busy` — no separate check-then-charge steps, fail closed on Upstash error; **leases: TTL 90 s, random owner token, compare-and-delete release, no renewal (deadline < TTL)**; POST-only + `application/json` + `X-Credlens-Scan: 1` + `Sec-Fetch-Site` same-origin/absent + **no CORS**; IP = **`x-vercel-forwarded-for` only**, `ipaddress`-parsed, IPv6 quota'd at /64, fail closed if absent; followers get **202 `{"status":"in-flight","retryAfter":5}` + `Retry-After: 5`** (r2 new #4); cache makes repeats cheap | Post-cap request-layer spend bounded by WAF + spend caps (numbers below) |
 | T7 | Secrets near hostile input | worker compromise reads credentials | Hostile bytes processed in the **env-scrubbed worker** (holds nothing); parent holds the single **ACL-scoped** Upstash token (`credlens:` prefix + required commands only); **everything crossing back from the worker or Redis is capped, framed, and schema-validated at the parent boundary** before use; no GitHub token, no LLM keys. **ACL token unprovisionable ⇒ public launch blocked** (preview may run on the default token) | /proc parent-env reach from a native worker RCE — documented, accepted for v1 (r2 concurred); `/cso` re-examines |
 | T8 | Info disclosure | stack traces, tmp paths, env in errors | Uniform terse JSON errors (schema in §Interface); detail only in structured, escaped server logs | — |
 | T9 | Content spoofing / phishing | attacker-authored strings shown to visitors | Ephemeral render under a fixed banner naming the scanned repo + unverified notice; findings content never linkified; only outbound link is `github.com/{owner}/{repo}` rebuilt from validated components | Screenshot spoofing — out of scope |
 | T10 | Cache poisoning / staleness / retention | cached results outliving repo visibility or identity | Cache = cost control only: POST-gated, TTL 24 h, **revalidation state machine before every cached serve** (§Result policy — authoritative-gone deletes, indeterminate 503s without deleting, 60 s memo), digest + scan time displayed, redaction boundary strips secret-shaped content, size-capped schema-validated reads, operator purge path | Path-identity reuse within TTL (§Result policy residual); ≤24 h staleness, displayed |
-| T11 | Upstream drift | codeload behavior is not a documented contract | Fail-closed: require status 200 **and** gzip magic; any 3xx/other = "upstream unsupported" error. **Acceptance matrix with defined outcomes (r2 #9):** normal ⇒ 200 + scan completes · renamed/transferred ⇒ 3xx/404 ⇒ clean "not found under this name" error · empty repo ⇒ valid tarball, 0 scannable files, manifest `complete` · LFS ⇒ pointer files scanned as text, noted in limitations · over-limit repo ⇒ 413-style "exceeds limits" error. Probe passes iff every case produces its defined outcome | A rename served transparently as 200 caches under the old name ≤24 h |
-| T12 | Output amplification | small archive → millions of findings | Binding caps **at the parent boundary before serialization or cache**: 100 findings/file · 1 000 total · bounded UTF-8 bytes per field · 2 MiB worker frame · 1 MiB serialized result; deterministic truncation with omitted-counts by reason; scan marked `partial` | — |
-| T13 | Silent partial coverage | unsupported language/extension reads as "clean" | **Versioned coverage manifest in every response**: supported languages/extensions, files seen/scanned/skipped + reasons, deadline status, `complete|partial|failed`; prominent partial banner. Walker suffix set vs detector support reconciled in its own eval-gated change | — |
+| T11 | Upstream drift | codeload behavior is not a documented contract | Fail-closed: require status 200 **and** gzip magic; every other outcome maps through the **single status→error matrix (r3 #3)** in §Interface — one authoritative mapping shared by this row, the handler, and the acceptance matrix. **Acceptance matrix with defined outcomes (r2 #9):** normal ⇒ 200 + scan completes · renamed/transferred ⇒ 3xx ⇒ `not_found` · deleted/blocked ⇒ 404/410/451 ⇒ `not_found` · empty repo ⇒ valid tarball, 0 scannable files, manifest `complete` · LFS ⇒ pointer files scanned as text, noted in limitations · over-limit repo ⇒ `payload_too_large`. Probe passes iff every case produces its matrix outcome | A rename served transparently as 200 caches under the old name ≤24 h |
+| T12 | Output amplification | small archive → millions of findings | Binding caps **at the parent boundary before serialization or cache**, applied to the **combined findings + inventory record population (r3 #6)**: 100 records/file · 1 000 records total · bounded UTF-8 bytes per field · 2 MiB worker frame · 1 MiB serialized result; deterministic truncation with omitted-counts **by kind and reason**; scan marked `partial` | — |
+| T13 | Silent partial coverage | unsupported language/extension reads as "clean" | **Versioned coverage manifest in every success (200) response (r3 #4)**: supported languages/extensions, files seen/scanned/skipped + reasons, deadline status, `complete|partial`; prominent partial banner. **Whole-scan failure is represented solely by the error envelope (`scan_failed`)** — no coverage object in 4xx/5xx. Walker suffix set vs detector support reconciled in its own eval-gated change | — |
 
 Supply-chain posture: zero new runtime dependencies — stdlib `urllib` (fetch + Upstash REST),
 `tarfile`, `gzip`, `re`, `json`, `ipaddress`. Vercel build installs the existing pinned deps via
@@ -186,13 +195,33 @@ via `object_pairs_hook`; extra members rejected) · strict ASCII, no percent-esc
 absent or `same-origin` · no CORS headers ever · one **monotonic end-to-end deadline** spanning
 fetch → extract → scan → cache → response with per-stage deadlines · structured escaped logging.
 
-**Response schemas (r2 #19):**
-- Success `200`: `{"schema": 1, "repo", "digest", "scanned_at", "coverage": {…}, "findings": […],
-  "inventory": […], "truncated": {…}|null}` — field set closed, byte-capped, redacted.
+**Response schemas (r2 #19, r3 #5):**
+- Success `200`: `{"schema": 1, "repo", "digest", "scanned_at", "coverage", "findings",
+  "inventory", "truncated"}` — the **only** status carrying `coverage` (r3 #4); field set closed,
+  byte-capped, redacted.
 - In-flight `202`: `{"status": "in-flight", "retryAfter": 5}` + `Retry-After: 5`.
 - Errors `4xx/5xx`: `{"error": "<short-code>"}` — closed enum
   (`bad_request`, `not_found`, `payload_too_large`, `rate_limited`, `busy`, `upstream_unsupported`,
-  `scan_failed`, `unavailable`), never free text.
+  `scan_failed`, `unavailable`), never free text, never a coverage object.
+- The prose above is schematic by design: **milestone 3.2b's first deliverable is a versioned
+  JSON Schema (`docs/specs/hosted-scan-schema.json`) with closed objects, typed/enumed nested
+  fields, and per-field byte caps** — the parent-boundary validator, the renderer, and the tests
+  all consume that file; hand-rolled ad-hoc validation is out.
+
+**Status→error matrix (r3 #3 — the single authoritative mapping; T11 and the handler share it):**
+
+| Condition | HTTP | `error` code |
+|---|---|---|
+| invalid identifier / malformed request | 400 | `bad_request` |
+| body or repo over caps | 413 | `payload_too_large` |
+| codeload 3xx (rename/transfer — redirects refused) | 404 | `not_found` |
+| codeload 404/410/451 | 404 | `not_found` |
+| codeload other non-200, or 200 without gzip magic | 502 | `upstream_unsupported` |
+| request-rate or scan-budget exceeded | 429 | `rate_limited` |
+| active-scan cap reached | 503 + `Retry-After` | `busy` |
+| worker native death / stall kill / frame violation | 500 | `scan_failed` |
+| Upstash unreachable, revalidation indeterminate | 503 + `Retry-After` | `unavailable` |
+
 All statuses: `application/json; charset=utf-8`, `nosniff`, `no-store`.
 
 Limits (displayed on the landing page — stated limitations are credibility):
@@ -239,8 +268,9 @@ Plus: URL-validation unit tests (scheme/host/userinfo/port tricks, unicode confu
 casing → one casefolded key, encoded slashes, duplicate params/keys, oversized body) · quota tests
 (request-level limit before cache work — **cached-hit flood consumes request budget, not scan
 budget**; atomicity under parallel fire; fail-closed on Upstash error; spoofed `X-Forwarded-For`
-ignored) · **follower-no-charge test** (202 path consumes no scan budget) · lease tests (active
-cap 2 held under parallel load; owner-token release; TTL expiry of a crashed holder) ·
+ignored) · **admission-transition race test (r3 #1): N simultaneous misses for one repo yield
+exactly one `leader`, N−1 uncharged `follower`s — never double-charged quota** · lease tests
+(active cap 2 held under parallel load; owner-token release; TTL expiry of a crashed holder) ·
 revalidation state-machine tests (200/301/404/timeout paths; 60 s memo; no delete on
 indeterminate) · error-hygiene (no paths/traces; closed error enum) · MIME/rewrite (exact types on
 every status; anchored rewrite; extra segments 404) · cross-request isolation (two repos, unique
@@ -257,8 +287,10 @@ outcomes) · `vercel dev` smoke · the synthetic control scanned through the URL
   every pinned wheel, parses one fixture, spawns and **group-kills** a hanging worker, exercises
   `/tmp` create/cleanup, confirms `fluid: false` + explicit memory/`maxDuration`, and runs the T11
   matrix against its defined outcomes. Kill criterion: any case undefined/unsafe ⇒ fallback.
-- **3.2b — scan core, local**: `scan.py` factor-out + `hosted/` fetch/metered-extract/limits/
-  worker-protocol/redaction, TDD against the adversarial fixtures. No network in tests.
+- **3.2b — scan core, local**: **first deliverable: `hosted-scan-schema.json`** (the closed,
+  versioned response/frame schema — validator, renderer, and tests consume it); then `scan.py`
+  factor-out + `hosted/` fetch/metered-extract/limits/worker-protocol/redaction, TDD against the
+  adversarial fixtures. No network in tests.
 - **3.3 — web surface, local**: handler contract + static pages/assets + atomic quotas/leases +
   XSS/CSP/MIME/bidi tests; `vercel dev` smoke.
 - **3.4 — gated deploy**: protected preview (asserted) → deployed-surface test suite → **full

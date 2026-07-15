@@ -2,7 +2,7 @@
 type: status
 title: "credlens — tasks"
 created_date: 2026-07-14
-last_modified: 2026-07-14 20:20 PDT
+last_modified: 2026-07-14 20:42 PDT
 ---
 
 # Tasks
@@ -43,7 +43,8 @@ last_modified: 2026-07-14 20:20 PDT
 - [x] 3.1c Codex round 2: REVISE (12 resolved · 8 partial · 8 new · negotiated fix accepted
   conditionally) → spec v3 + [ADR-0003](../adr/0003-hosted-output-publication-semantics.md) +
   plan §Phase 3 amendment
-- [ ] 3.1d Codex round 3 convergence pass on spec v3 → APPROVE before build code
+- [x] 3.1d Codex round 3: **APPROVE-WITH-CHANGES** — 7 should-fix + 2 nits folded as spec v3.1;
+  **3.1 gate CLOSED** (21 → 9+8 → 0 blocking across three rounds)
 - [ ] 3.2a Runtime probe, Deployment-Protection-enabled: wheel imports, worker kill semantics,
   /tmp, fluid:false, maxDuration, T11 upstream matrix. Kill criterion: probe fails ⇒ fallback
 - [ ] 3.2b Scan core, local: shared `scan.py` walker factor-out + `hosted/` fetch/streamed-extract/

@@ -3,7 +3,7 @@ type: plan
 title: "credlens v1 — evals-first build plan"
 status: active
 created_date: 2026-07-14
-last_modified: 2026-07-14 20:20 PDT
+last_modified: 2026-07-14 20:42 PDT
 tags: [mcp, security, evals, static-analysis]
 ---
 
@@ -96,9 +96,10 @@ Minimal surface: GitHub URL in → pinned tarball fetch (size cap, timeout) → 
 ephemeral findings view behind a shareable click-to-run pointer. Threat-model the tool's own
 surface **before** building it:
 
-- SSRF via clone URL (`git://`, `file://`, redirects) → allowlist `https://github.com/…` only,
-  resolve + validate before clone.
-- Zip-bombs / monster repos → depth-1, size cap, wall-clock timeout, tmpdir jail.
+- SSRF via repo URL (`git://`, `file://`, redirects) → parse-don't-fetch: strict owner/repo
+  validation, fetch URL rebuilt against the pinned codeload tarball host, redirects refused.
+- Zip-bombs / monster repos → streamed, metered extraction caps (compressed / decompressed /
+  written / member counts), wall-clock timeout, tmpdir jail.
 - Symlink escape in hostile layouts → no symlink following outside the scan root.
 - Parser DoS → per-file try/except + per-file timeout.
 - **Stored XSS in findings pages** — rendered findings are attacker-controlled strings from the
@@ -110,8 +111,9 @@ surface **before** building it:
 clock fails: ship the CLI + a hosted static demo of pre-scanned reports (no user input = no attack
 surface) and defer live scan-by-URL.
 
-Default target: Vercel (parse-only fits serverless via wasm tree-sitter). Fork trigger: >30% of
-scans hitting serverless limits → move the scan worker to a job queue behind the same front.
+Default target: Vercel (parse-only fits serverless; native Python tree-sitter wheels, proven by
+the spec's protected runtime probe before the build). Fork trigger: >30% of scans hitting
+serverless limits → move the scan worker to a job queue behind the same front.
 
 ## Phase 4 — Ecosystem scan + write-ups
 

@@ -2,7 +2,7 @@
 type: status
 title: "credlens — review notes"
 created_date: 2026-07-14
-last_modified: 2026-07-14 20:20 PDT
+last_modified: 2026-07-14 20:42 PDT
 ---
 
 # Review notes
@@ -23,7 +23,7 @@ Review log: codex job `task-mrlgxg9z-ayyn3c` (BENDER workspace state).
 
 ## 2026-07-14 · Codex adversarial round 2 — hosted-scan spec v2 (convergence pass)
 
-Verdict **REVISE**: 12/21 round-1 resolutions verified RESOLVED, 8 PARTIAL (mechanisms/numbers
+Verdict **REVISE**: 12/21 round-1 resolutions verified RESOLVED, 9 PARTIAL (mechanisms/numbers
 missing, not direction), 8 new findings (2 blocking), and the negotiated worker isolation judged
 **acceptable-for-v1** conditional on a genuinely ACL-scoped Upstash token (default token may never
 back a public launch) + parent-boundary hardening. Highest-value catches: cache hits evaded all
@@ -35,6 +35,21 @@ messages embed raw repo values (hosted redaction boundary) · the plan itself st
 forbidden "shareable findings page" (plan amended; publication semantics formalized as
 [ADR-0003](../adr/0003-hosted-output-publication-semantics.md)). Spec v3 absorbs all; round 3
 convergence pending. Review log: codex job `task-mrlhs1ez-wy8omd`.
+
+## 2026-07-14 · Codex adversarial round 3 — hosted-scan spec v3 (final convergence)
+
+Verdict **APPROVE-WITH-CHANGES** — the 3.1 gate is **CLOSED** (converged in 3 rounds:
+21 → 9 partial + 8 new → 0 blocking). Round 3 verified 13/17 checked items RESOLVED; ADR-0003's
+reasoning confirmed consistent with invariant 5 and the amended plan. Remaining 7 should-fix +
+2 nits all folded as spec v3.1: one atomic Lua admission transition (leader/follower/busy/
+rate_limited — kills the quota/lease TOCTOU) · redaction-last response assembly with
+service-metadata exemption · a single status→error matrix shared by T11 and the handler ·
+coverage manifest on success responses only (whole-scan failure = `scan_failed` envelope) ·
+output caps bind the combined findings+inventory population · full `Bidi_Control` escape set +
+embedding-control fixture · `hosted-scan-schema.json` as 3.2b's first deliverable · plan.md
+clone-era residuals replaced · ADR-0003 cross-ref fixed. Build (3.2a runtime probe onward) may
+proceed; the `/cso` + operator-approval gates at 3.4 stand. Review log: codex job
+`task-mrliits7-h7lpgu`.
 
 Standing gates:
 

@@ -3,7 +3,7 @@ type: adr
 title: "ADR-0003 — publication semantics for hosted scan output"
 status: accepted
 created_date: 2026-07-14
-last_modified: 2026-07-14 20:15 PDT
+last_modified: 2026-07-14 20:42 PDT
 ---
 
 # ADR-0003 — publication semantics for hosted scan output
@@ -34,7 +34,8 @@ Binding consequences for the hosted surface:
 - No GET route ever serves findings; share URLs are click-to-run pointers.
 - The internal result cache is cost control: only ever served into an admitted POST response,
   TTL-bounded, never a stable artifact of record.
-- Findings-bearing responses carry no secret material (hosted redaction boundary — spec T12).
+- Findings-bearing responses carry no secret material (hosted redaction boundary — spec
+  §Result policy).
 - If a hosted scan surfaces what appears to be a real critical in a named repo, the disclosure
   protocol (plan §Phase 4) governs any *publication* by us; the ephemeral response itself is the
   requester's tool output.

@@ -31,6 +31,7 @@ from credlens.detectors import (
     LeastPrivDetector,
 )
 from credlens.detectors.base import LENS_CREDENTIAL
+from credlens.scan import SCAN_SUFFIXES, scan_tree
 
 REPO = Path(__file__).resolve().parents[3]
 CORPUS = REPO / "corpus"
@@ -40,20 +41,14 @@ RESULTS = REPO / "eval" / "results.json"
 REPORT = REPO / "eval" / "report.md"
 FLOOR = REPO / "eval" / "floor.json"
 
-SCAN_SUFFIXES = {".ts", ".js", ".mjs", ".cts", ".mts", ".py"}
-
 
 def _run_detector(detector, root: Path) -> list[tuple[str, Finding]]:
-    """Scan every source file under root; return (relpath, finding) pairs."""
-    out = []
-    for path in sorted(root.rglob("*")):
-        if path.suffix not in SCAN_SUFFIXES or not path.is_file():
-            continue
-        rel = path.relative_to(root).as_posix()
-        text = path.read_text(errors="replace")
-        for f in detector.scan_text(rel, text):
-            out.append((rel, f))
-    return out
+    """Scan every source file under root; return (relpath, finding) pairs.
+
+    Thin wrapper over the shared walker (credlens.scan) so eval and the hosted
+    scan share one code path. Single-detector call site, so wrap it in a list.
+    """
+    return scan_tree(root, [detector]).findings
 
 
 def _credential_findings(pairs):

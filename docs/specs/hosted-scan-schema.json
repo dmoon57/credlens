@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://credlens/hosted-scan-schema/1",
+  "title": "credlens hosted scan — response & worker-frame schemas (v1)",
+  "description": "Closed, versioned contract for the hosted scan surface (docs/specs/hosted-scan.md). The parent-boundary validator, the worker, the renderer, and the tests all consume THIS file. All objects are closed (additionalProperties:false); every repository-derived string carries a maxLength byte-cap; caps mirror the spec's Interface & limits.",
+  "$defs": {
+    "shortStr": { "type": "string", "maxLength": 512 },
+    "message": { "type": "string", "maxLength": 2000 },
+    "lens": { "type": "string", "enum": ["credential", "capability"] },
+    "kind": { "type": "string", "enum": ["finding", "inventory"] },
+    "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "line", "lens", "kind", "message", "confidence"],
+      "properties": {
+        "file": { "$ref": "#/$defs/shortStr" },
+        "line": { "type": "integer", "minimum": 1, "maximum": 100000000 },
+        "lens": { "$ref": "#/$defs/lens" },
+        "kind": { "$ref": "#/$defs/kind" },
+        "message": { "$ref": "#/$defs/message" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "languages", "files_seen", "files_scanned", "files_skipped", "skipped"],
+      "properties": {
+        "status": { "type": "string", "enum": ["complete", "partial"] },
+        "languages": {
+          "type": "array", "maxItems": 16,
+          "items": { "type": "string", "enum": ["javascript", "typescript", "python"] }
+        },
+        "files_seen": { "type": "integer", "minimum": 0, "maximum": 5000 },
+        "files_scanned": { "type": "integer", "minimum": 0, "maximum": 5000 },
+        "files_skipped": { "type": "integer", "minimum": 0, "maximum": 5000 },
+        "deadline_hit": { "type": "boolean" },
+        "skipped": {
+          "type": "array", "maxItems": 200,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["reason", "count"],
+            "properties": {
+              "reason": {
+                "type": "string",
+                "enum": ["unsupported_ext", "over_size", "parse_error", "deadline", "binary"]
+              },
+              "count": { "type": "integer", "minimum": 1, "maximum": 10000000 }
+            }
+          }
+        }
+      }
+    },
+    "truncated": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "findings_omitted": { "type": "integer", "minimum": 0 },
+        "inventory_omitted": { "type": "integer", "minimum": 0 },
+        "reason": { "type": "string", "enum": ["per_file_cap", "total_cap", "byte_cap"] }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "title": "success (HTTP 200) — the ONLY status carrying findings/coverage",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "repo", "digest", "scanned_at", "coverage", "findings", "inventory", "truncated"],
+      "properties": {
+        "schema": { "const": 1 },
+        "repo": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$" },
+        "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "scanned_at": { "type": "string", "maxLength": 40 },
+        "coverage": { "$ref": "#/$defs/coverage" },
+        "findings": { "type": "array", "maxItems": 1000, "items": { "$ref": "#/$defs/record" } },
+        "inventory": { "type": "array", "maxItems": 1000, "items": { "$ref": "#/$defs/record" } },
+        "truncated": { "$ref": "#/$defs/truncated" }
+      }
+    },
+    {
+      "title": "in-flight (HTTP 202)",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "retryAfter"],
+      "properties": {
+        "status": { "const": "in-flight" },
+        "retryAfter": { "type": "integer", "minimum": 1, "maximum": 3600 }
+      }
+    },
+    {
+      "title": "error (HTTP 4xx/5xx) — closed enum, never free text, never a coverage object",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "string",
+          "enum": ["bad_request", "not_found", "payload_too_large", "rate_limited", "busy", "upstream_unsupported", "scan_failed", "unavailable"]
+        }
+      }
+    }
+  ],
+  "worker_frame": {
+    "title": "worker→parent frame (length-prefixed, parent-enforced 2 MiB cap)",
+    "description": "What the killable worker returns over its pipe. The parent validates this BEFORE assembling any response — combined findings+inventory record population is capped downstream (spec T12). Note: file/message here are RAW repo-derived strings; the parent applies the redaction boundary before they reach any 200 body.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["records", "coverage"],
+    "properties": {
+      "records": { "type": "array", "maxItems": 2000, "items": { "$ref": "#/$defs/record" } },
+      "coverage": { "$ref": "#/$defs/coverage" }
+    }
+  }
+}

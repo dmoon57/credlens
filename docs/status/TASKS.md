@@ -2,7 +2,7 @@
 type: status
 title: "credlens — tasks"
 created_date: 2026-07-14
-last_modified: 2026-07-14 23:17 PDT
+last_modified: 2026-07-14 23:43 PDT
 ---
 
 # Tasks
@@ -54,8 +54,15 @@ last_modified: 2026-07-14 23:17 PDT
 - [ ] **3.2a owed deploy-gate action:** project defaults `fluid: true`; not settable via v9 API on
   the current CLI → disable Fluid Compute at 3.4 (dashboard toggle / newer CLI). Code-level
   per-request detector instances are the enforced guarantee; no public ship until fluid is off.
-- [ ] 3.2b Scan core, local: shared `scan.py` walker factor-out + `hosted/` fetch/streamed-extract/
-  limits/worker, TDD against adversarial fixtures — no network in tests
+- [x] 3.2b Scan core, local — **DONE 2026-07-14 23:40** (97 tests green, CI green). Shared
+  `scan.py` walker factor-out (eval pure-refactor, numbers identical) + `hosted/`: `extract`
+  (streamed metered gzip→tar, dirs+regular-files only, links/devices/traversal rejected),
+  `frame`+`validate` (length-prefixed 2 MiB frame, hand-rolled closed-schema validator drift-guarded
+  vs `hosted-scan-schema.json`), `worker`+`runner` (scrubbed subprocess in its own process group,
+  per-file stall + total deadline, SIGKILL the group incl. grandchildren, ScanFailed/ScanRejected),
+  `redact` (token-shape + high-entropy scrub of repo-derived strings, service metadata exempt,
+  combined findings+inventory caps), `fetch` (parse-don't-fetch identifier, pinned-host codeload,
+  redirects refused, compressed cap). 38 hosted tests incl. all adversarial fixtures.
 - [ ] 3.3 Web surface, local: handler contract + static pages/assets + atomic quotas +
   XSS/CSP/MIME tests; `vercel dev` smoke
 - [ ] 3.4 Gated deploy: protected preview (asserted) → deployed-surface tests → full `/cso` →

@@ -2,7 +2,7 @@
 type: status
 title: "credlens — handoff"
 created_date: 2026-07-14
-last_modified: 2026-07-14 23:17 PDT
+last_modified: 2026-07-14 23:43 PDT
 ---
 
 # Handoff
@@ -11,8 +11,19 @@ last_modified: 2026-07-14 23:17 PDT
 launch post drafted); hosted scan-by-URL + ecosystem scan + data-story draft by 2026-07-27.
 Full plan: [../plan/plan.md](../plan/plan.md).
 
-**Phase:** 3 (hosted scan-by-URL) — **3.1 (spec + adversarial gate) and 3.2a (runtime probe) both
-COMPLETE** 2026-07-14 evening. Phases 0 + 1 + 2 completed earlier the same day.
+**Phase:** 3 (hosted scan-by-URL) — **3.1 (spec+gate), 3.2a (runtime probe), and 3.2b (scan core)
+all COMPLETE** 2026-07-14 evening. Phases 0 + 1 + 2 completed earlier the same day.
+
+**3.2b scan core (DONE, 97 tests green, CI green):** the whole local pipeline
+fetch→extract→scan→frame→validate→redact is built and adversarially tested. Modules in
+`src/credlens/hosted/`: `fetch` (parse-don't-fetch identifier + pinned codeload, redirects
+refused), `extract` (streamed metered gzip→tar; only dirs+regular files; links/devices/traversal/
+bombs rejected), `frame`+`validate` (2 MiB length-prefixed frame + hand-rolled closed-schema
+validator, drift-guarded vs `docs/specs/hosted-scan-schema.json`), `worker`+`runner` (scrubbed
+subprocess in its own process group; per-file stall + total deadline; SIGKILL the whole group incl.
+grandchildren; ScanFailed vs ScanRejected), `redact` (token-shape + high-entropy scrub of every
+repo-derived string, service metadata exempt, combined caps). `src/credlens/scan.py` is the shared
+network-free walker (eval repointed to it — pure refactor, eval numbers identical).
 
 **3.2a probe result (PASSED):** protected preview deploy proved, on the real Vercel runtime (iad1,
 Python 3.12.13, x86_64, /tmp 512 MB): tree-sitter wheels install + all 3 grammars parse · worker
@@ -33,17 +44,20 @@ guarantee is what actually enforces isolation.
 - Feasibility de-risked early: all four tree-sitter packages resolve as manylinux/abi3 x86_64
   wheels for CPython 3.12 (~2.4 MB).
 
-**Exact next step (3.2b — local, no approvals):** (a) author `docs/specs/hosted-scan-schema.json`
-(closed versioned response/frame schema); (b) build adversarial tarball fixtures in an isolated
-context (traversal · abs-path · internal-symlink · hardlink-farm · gzip-bomb · 6000-file ·
-oversize-member · duplicate-path · overlong-name · crash-source · hanging-parser · worker-death ·
-result-bomb · planted-token · XSS-payload · bidi/control); (c) TDD the scan core — `src/credlens/
-scan.py` walker factor-out + `src/credlens/hosted/` (fetch, streamed metered extract, limits,
-killable worker protocol, redaction) — against the fixtures, no network in tests. Then 3.3 (web
-surface + Upstash provisioning), 3.4 (protected preview → full `/cso` → operator approval → public).
-**Preconditions to track:** Upstash Redis + ACL-scoped token (`credlens:` prefix) — ACL is a
-public-launch precondition (DECISIONS.md); default token = preview-only. **Owed 3.4 config:**
-disable Fluid Compute (see above).
+**Exact next step (3.3 — web surface, mostly local):** build `api/scan.py` (the stdlib handler:
+POST-only admission contract, one atomic Lua admission transition → leader/follower/busy/
+rate_limited, cache lookup + revalidation state machine, then fetch→runner→redact→respond) + the
+static pages/assets (`web/index.html`, `web/scan.html`, external `scan.js`/`scan.css` — CSP header
+via `vercel.json`, textContent-only render, bidi/control escaping) + the status→error matrix and
+response schemas from the spec. Tests: quota/lease atomicity, cached-hit-consumes-request-budget,
+MIME/rewrite, XSS/CSP render (DOM-asserted). **One operator touchpoint mid-3.3:** provision Upstash
+Redis + the ACL-scoped token (`credlens:` prefix) — I'll bring the exact `upstash` CLI commands;
+ACL is a public-launch precondition (DECISIONS.md), default token = preview-only. Then 3.4 (protected
+preview → deployed-surface tests → full `/cso` → operator approval → WAF+spend → public).
+
+**Owed 3.4 config:** disable Fluid Compute (project defaults `fluid:true`, not API-settable on the
+current CLI — dashboard/newer CLI); code-level per-request detector instances already enforce the
+isolation the toggle backstops. The probe project `moonman/credlens` is linked and protected.
 
 ---
 

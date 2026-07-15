@@ -2,7 +2,7 @@
 type: status
 title: "credlens — handoff"
 created_date: 2026-07-14
-last_modified: 2026-07-14 18:27 PDT
+last_modified: 2026-07-14 20:50 PDT
 ---
 
 # Handoff
@@ -11,7 +11,33 @@ last_modified: 2026-07-14 18:27 PDT
 launch post drafted); hosted scan-by-URL + ecosystem scan + data-story draft by 2026-07-27.
 Full plan: [../plan/plan.md](../plan/plan.md).
 
-**Phase:** 2 (credential/least-priv lens) — **COMPLETE** 2026-07-14 (Moves 2.1–2.3). Phases 0 + 1 same day.
+**Phase:** 3 (hosted scan-by-URL) — **milestone 3.1 (spec + adversarial gate) COMPLETE** 2026-07-14
+evening. Phases 0 + 1 + 2 completed earlier the same day.
+
+**Done (Phase 3 · 3.1):**
+- Threat-model-first spec: [../specs/hosted-scan.md](../specs/hosted-scan.md) — 13-row threat
+  table, tarball-not-clone pinned-host fetch, env-scrubbed killable worker subprocess,
+  parent-boundary framing/validation, atomic Lua admission, ephemeral result policy, enforced
+  Deployment Protection, stdlib-only web layer, zero new runtime deps.
+- **Codex gate converged in 3 rounds** (REVISE 21 → REVISE 9 partial + 8 new → APPROVE-WITH-CHANGES,
+  all folded as v3.1). Full history: [REVIEW_NOTES.md](REVIEW_NOTES.md).
+- [ADR-0003](../adr/0003-hosted-output-publication-semantics.md): ephemeral on-demand output =
+  tool output; persistent/GET-servable = publication under invariant 5. Plan §Phase 3 amended.
+- Feasibility de-risked early: all four tree-sitter packages resolve as manylinux/abi3 x86_64
+  wheels for CPython 3.12 (~2.4 MB).
+
+**Exact next step (3.2a — needs operator approval, it deploys):** the protected runtime probe —
+minimal Vercel deploy behind Deployment Protection proving wheel imports, worker group-kill
+semantics, /tmp, `fluid: false`, `maxDuration`, + the T11 upstream matrix. Kill criterion: any
+undefined/unsafe outcome ⇒ pre-committed static-demo fallback. Then 3.2b (schema file first, then
+scan core TDD vs adversarial fixtures), 3.3 (web surface), 3.4 (protected preview → full `/cso` →
+operator approval → public). **Preconditions to track:** Upstash Redis + ACL-scoped token
+(`credlens:` prefix) — ACL is a public-launch precondition (DECISIONS.md); default token =
+preview-only.
+
+---
+
+**Phase 2 record (COMPLETE 2026-07-14, Moves 2.1–2.3):**
 
 **Done (Phase 2 — credential lens):**
 - Spec: [../specs/credential-lens.md](../specs/credential-lens.md) (taint model, the 4 FP classes,

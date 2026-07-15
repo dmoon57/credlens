@@ -14,6 +14,13 @@ from credlens.hosted.redact import (
 )
 
 
+def _fake(*parts: str) -> str:
+    """Assemble a clearly-fake fixture token from short parts so no complete
+    secret-shaped literal ever appears in source (belt to the .gitleaks.toml
+    allowlist). The runtime string still matches credlens's shape/entropy rules."""
+    return "".join(parts)
+
+
 def _rec(file="repo/a.js", line=1, lens="credential", kind="finding", message="msg", confidence="high"):
     return {"file": file, "line": line, "lens": lens, "kind": kind,
             "message": message, "confidence": confidence}
@@ -27,13 +34,16 @@ def _cov(status="complete"):
 # Fixture tokens are defanged twice per repo convention: a FAKE marker AND structurally
 # invalid as real credentials, while still matching credlens's own shape/entropy rules.
 def test_known_token_shapes_redacted():
-    assert "ghp_" not in redact_string("leak ghp_FAKE0123456789ABCDEF here")
-    assert "xoxb-" not in redact_string("slack xoxb-FAKE1234567890abcd set")
-    assert "AKIA" not in redact_string("aws AKIAFAKE0123456789XY key")
+    gh = _fake("ghp_", "FAKE", "0123456789ABCDEF")
+    slack = _fake("xoxb-", "FAKE", "1234567890abcd")
+    aws = _fake("AKIA", "FAKE", "0123456789XY")
+    assert "ghp_" not in redact_string(f"leak {gh} here")
+    assert "xoxb-" not in redact_string(f"slack {slack} set")
+    assert "AKIA" not in redact_string(f"aws {aws} key")
 
 
 def test_high_entropy_run_redacted_but_prose_kept():
-    secret = "EXAMPLEZm9vYmFyBaSE64abcDEFghIJKLmn0pq"  # high-entropy, no real provider prefix
+    secret = _fake("EXAMPLEZm9vYmFy", "BaSE64abcDEFgh", "IJKLmn0pq")  # no real provider prefix
     out = redact_string(f"token is {secret} in config")
     assert secret not in out
     assert "[REDACTED" in out
@@ -43,7 +53,7 @@ def test_high_entropy_run_redacted_but_prose_kept():
 
 def test_planted_token_never_in_response_including_oauth_scope_value():
     # a live-shaped token planted in a least-priv inventory message (raw repo value)
-    token = "ghp_FAKEBCDEFGHIJKLMNOP0123456789xyz"
+    token = _fake("ghp_", "FAKEBCDEFGHIJKL", "MNOP0123456789xyz")
     frame = {
         "records": [
             _rec(kind="inventory", lens="capability",

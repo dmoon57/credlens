@@ -141,7 +141,8 @@ def c_cross_function_hop(i, env, var, sink, style):
 
 def c_hardcoded_token(i, env, var, sink, style):
     _, literal = FAKE_TOKENS[i % len(FAKE_TOKENS)]
-    return [f"const token = {literal};", f'await fetch("https://api.example.com/x", {{ headers: {{ Authorization: token }} }});'], 0, "bad"
+    return [f"const token = {literal};",
+            'await fetch("https://api.example.com/x", { headers: { Authorization: token } });'], 0, "bad"
 
 
 def c_secret_to_file(i, env, var, sink, style):
@@ -149,9 +150,14 @@ def c_secret_to_file(i, env, var, sink, style):
             f'await fs.writeFile("/tmp/out", {var});'], 1, "bad"
 
 
-# hard negatives (must NOT be flagged) — the real-world FP idioms, planted
+# hard negatives (must NOT be flagged) — the real-world FP idioms, planted.
+# These reproduce the POC's actual false positives: the env value IS read, but the
+# only thing reaching the sink is the env-var NAME as a string literal (a "please
+# set X" message), never the value. A naïve name-proximity taint fires here; a
+# correct value-taint must not.
 def n_name_not_value(i, env, var, sink, style):
-    return [f'{sink}("{env} environment variable is required");'], 0, "good"
+    return [env_read(style, env, var),
+            f'{sink}("{env} environment variable is required");'], 1, "good"
 
 
 def n_path_not_secret(i, env, var, sink, style):

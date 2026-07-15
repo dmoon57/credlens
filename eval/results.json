@@ -1,0 +1,95 @@
+{
+  "detector": "baseline",
+  "real_servers": {
+    "available": true,
+    "credential_findings": 3,
+    "true_positive": 0,
+    "false_positive": 3,
+    "precision": 0.0,
+    "examples": [
+      "servers-archived/brave-search/index.ts:84 Secret value (BRAVE_API_KEY) may reach a sink",
+      "servers-archived/gitlab/index.ts:62 Secret value (GITLAB_PERSONAL_ACCESS_TOKEN) may reach a sink",
+      "servers-archived/google-maps/index.ts:139 Secret value (GOOGLE_MAPS_API_KEY) may reach a sink"
+    ]
+  },
+  "mutations": {
+    "available": true,
+    "recall": {
+      "tune": {
+        "caught": 65,
+        "total": 108,
+        "recall": 0.6019
+      },
+      "holdout": {
+        "caught": 28,
+        "total": 54,
+        "recall": 0.5185
+      }
+    },
+    "by_class": {
+      "direct-env-log": {
+        "caught": 15,
+        "total": 18,
+        "split": "tune",
+        "recall": 0.8333
+      },
+      "aliased-log": {
+        "caught": 10,
+        "total": 18,
+        "split": "tune",
+        "recall": 0.5556
+      },
+      "template-log": {
+        "caught": 10,
+        "total": 18,
+        "split": "tune",
+        "recall": 0.5556
+      },
+      "secret-in-url": {
+        "caught": 10,
+        "total": 18,
+        "split": "tune",
+        "recall": 0.5556
+      },
+      "secret-in-header": {
+        "caught": 10,
+        "total": 18,
+        "split": "tune",
+        "recall": 0.5556
+      },
+      "secret-in-body": {
+        "caught": 10,
+        "total": 18,
+        "split": "tune",
+        "recall": 0.5556
+      },
+      "cross-function-hop": {
+        "caught": 0,
+        "total": 18,
+        "split": "holdout",
+        "recall": 0.0
+      },
+      "hardcoded-token": {
+        "caught": 18,
+        "total": 18,
+        "split": "holdout",
+        "recall": 1.0
+      },
+      "secret-to-file": {
+        "caught": 10,
+        "total": 18,
+        "split": "holdout",
+        "recall": 0.5556
+      }
+    },
+    "negatives": {
+      "total": 36,
+      "false_positives": 10
+    },
+    "precision": 0.9029
+  },
+  "overall": {
+    "false_positive_rate": 0.1226,
+    "industry_baseline_note": "~78% flagged-findings-false is a single 33-server study \u2014 directional only, NOT our denominator (see README methodology)."
+  }
+}

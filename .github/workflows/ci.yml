@@ -16,19 +16,15 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv run pytest
 
-  # Eval gate — becomes the release floor once the evals harness lands (Phase 1).
-  # It will fail the build on any precision/recall regression below the last-release floor.
+  # Eval gate — the release floor. Assembles the pinned corpus + mutation corpus,
+  # verifies the mutation corpus is reproducible, and fails the build on any
+  # precision/recall regression below eval/floor.json.
   eval-gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: eval harness pending (Phase 1)
-        run: |
-          if [ -f Makefile ] && grep -q '^eval-ci:' Makefile; then
-            make eval-ci
-          else
-            echo "Eval harness not built yet — this gate goes live in Phase 1."
-          fi
+      - uses: astral-sh/setup-uv@v5
+      - run: make eval-ci
 
   # Eval integrity — corpus labels and detector code must never change together.
   # Label edits carry their own justification; pairing them with detector edits is

@@ -2322,7 +2322,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m162.ts",
-      "sink_line": 6,
+      "sink_line": 7,
       "env": "API_KEY",
       "idiom": {
         "sink": "console.log",
@@ -2336,7 +2336,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m163.ts",
-      "sink_line": 5,
+      "sink_line": 6,
       "env": "API_KEY",
       "idiom": {
         "sink": "console.error",
@@ -2350,7 +2350,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m164.ts",
-      "sink_line": 4,
+      "sink_line": 5,
       "env": "API_KEY",
       "idiom": {
         "sink": "console.warn",
@@ -2364,7 +2364,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m165.ts",
-      "sink_line": 6,
+      "sink_line": 7,
       "env": "GITHUB_TOKEN",
       "idiom": {
         "sink": "console.log",
@@ -2378,7 +2378,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m166.ts",
-      "sink_line": 5,
+      "sink_line": 6,
       "env": "GITHUB_TOKEN",
       "idiom": {
         "sink": "console.error",
@@ -2392,7 +2392,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m167.ts",
-      "sink_line": 4,
+      "sink_line": 5,
       "env": "GITHUB_TOKEN",
       "idiom": {
         "sink": "console.warn",
@@ -2406,7 +2406,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m168.ts",
-      "sink_line": 6,
+      "sink_line": 7,
       "env": "SLACK_BOT_TOKEN",
       "idiom": {
         "sink": "console.log",
@@ -2420,7 +2420,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m169.ts",
-      "sink_line": 5,
+      "sink_line": 6,
       "env": "SLACK_BOT_TOKEN",
       "idiom": {
         "sink": "console.error",
@@ -2434,7 +2434,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m170.ts",
-      "sink_line": 4,
+      "sink_line": 5,
       "env": "SLACK_BOT_TOKEN",
       "idiom": {
         "sink": "console.warn",
@@ -2448,7 +2448,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m171.ts",
-      "sink_line": 6,
+      "sink_line": 7,
       "env": "DATABASE_URL",
       "idiom": {
         "sink": "console.log",
@@ -2462,7 +2462,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m172.ts",
-      "sink_line": 5,
+      "sink_line": 6,
       "env": "DATABASE_URL",
       "idiom": {
         "sink": "console.error",
@@ -2476,7 +2476,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m173.ts",
-      "sink_line": 4,
+      "sink_line": 5,
       "env": "DATABASE_URL",
       "idiom": {
         "sink": "console.warn",
@@ -2490,7 +2490,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m174.ts",
-      "sink_line": 6,
+      "sink_line": 7,
       "env": "STRIPE_SECRET_KEY",
       "idiom": {
         "sink": "console.log",
@@ -2504,7 +2504,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m175.ts",
-      "sink_line": 5,
+      "sink_line": 6,
       "env": "STRIPE_SECRET_KEY",
       "idiom": {
         "sink": "console.error",
@@ -2518,7 +2518,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m176.ts",
-      "sink_line": 4,
+      "sink_line": 5,
       "env": "STRIPE_SECRET_KEY",
       "idiom": {
         "sink": "console.warn",
@@ -2532,7 +2532,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m177.ts",
-      "sink_line": 6,
+      "sink_line": 7,
       "env": "OPENAI_API_KEY",
       "idiom": {
         "sink": "console.log",
@@ -2546,7 +2546,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m178.ts",
-      "sink_line": 5,
+      "sink_line": 6,
       "env": "OPENAI_API_KEY",
       "idiom": {
         "sink": "console.error",
@@ -2560,7 +2560,7 @@
       "split": "negative",
       "label": "good",
       "file": "negative/neg-name-not-value/m179.ts",
-      "sink_line": 4,
+      "sink_line": 5,
       "env": "OPENAI_API_KEY",
       "idiom": {
         "sink": "console.warn",
@@ -2821,5 +2821,5 @@
       }
     }
   ],
-  "tree_sha256": "85c32736b6f515abacbf030c48dc284c3e94627639b5b69111b3538024a33ad7"
+  "tree_sha256": "cc26f888732c3c12517a5b5873a76959c5e1014f4cdac3b3da7642951456c941"
 }

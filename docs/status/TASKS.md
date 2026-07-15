@@ -2,7 +2,7 @@
 type: status
 title: "credlens — tasks"
 created_date: 2026-07-14
-last_modified: 2026-07-14 15:09 PDT
+last_modified: 2026-07-14 17:30 PDT
 ---
 
 # Tasks
@@ -15,13 +15,14 @@ last_modified: 2026-07-14 15:09 PDT
 - [x] CI: lint · test · eval-gate slot · eval-integrity guard
 - [x] OKF docs tree (plan, ADR-0001/0002, status, research/POC)
 
-## Phase 1 — Evals harness
-- [ ] `corpus/manifest.json` (pinned SHAs) + fetch script (`make corpus`)
-- [ ] Mirror corpus tarballs to a release asset (archived repos rot)
-- [ ] Hand-adjudicate POC's 60 findings → `corpus/labels.json` (before detector work)
-- [ ] Mutation corpus: ≥100 planted instances, ≥8 classes, class-level holdout
-- [ ] Harness: per-lens precision/recall + FP rate (JSON + md) · `make eval` / `make eval-ci`
-- [ ] CI gate demonstrated red-then-green on a planted regression
+## Phase 1 — Evals harness ✅
+- [x] `corpus/manifest.json` (pinned SHAs) + fetch script (`make corpus`)
+- [x] Mirror corpus tarballs to release `corpus-v1` (archived repos rot); mirror-only fetch verified
+- [x] Hand-adjudicate POC's 60 findings → `corpus/labels.json` (before detector work) — 8 TP / 7 FP / 45 inventory
+- [x] Mutation corpus: 198 instances, 11 classes, class-level holdout (`make mutations`, `--check`)
+- [x] Harness: per-lens precision/recall + FP rate (JSON + `eval/report.md`) · `make eval` / `make eval-ci`
+- [x] Baseline (ported POC) measured; floor recorded (`eval/floor.json`)
+- [x] CI gate demonstrated red-then-green on a planted regression (exit 1 → exit 0)
 
 ## Phase 2 — Credential / least-priv lens
 - [ ] Four named FP classes as fixtures (before taint work)

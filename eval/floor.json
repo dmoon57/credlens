@@ -1,0 +1,7 @@
+{
+  "detector": "baseline",
+  "recorded": "set by --record-floor",
+  "real_server_precision": 0.0,
+  "mutation_recall_holdout": 0.5185,
+  "mutation_precision": 0.9029
+}

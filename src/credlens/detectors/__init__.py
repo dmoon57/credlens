@@ -5,6 +5,7 @@ from .base import (
     Finding,
 )
 from .baseline import BaselineDetector
+from .credential import CredentialDetector
 
 __all__ = [
     "Detector",
@@ -12,4 +13,5 @@ __all__ = [
     "LENS_CREDENTIAL",
     "LENS_CAPABILITY",
     "BaselineDetector",
+    "CredentialDetector",
 ]

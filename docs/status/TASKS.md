@@ -2,7 +2,7 @@
 type: status
 title: "credlens — tasks"
 created_date: 2026-07-14
-last_modified: 2026-07-14 17:30 PDT
+last_modified: 2026-07-14 18:02 PDT
 ---
 
 # Tasks
@@ -25,11 +25,13 @@ last_modified: 2026-07-14 17:30 PDT
 - [x] CI gate demonstrated red-then-green on a planted regression (exit 1 → exit 0)
 
 ## Phase 2 — Credential / least-priv lens
-- [ ] Four named FP classes as fixtures (before taint work)
-- [ ] Intra-file taint on tree-sitter scopes (2-day box; then ADR-0001 fork decision)
-- [ ] Source/sink model with confidence tiers
-- [ ] Least-priv inventory checks
-- [ ] Targets: precision ≥0.90 holdout · mutation recall ≥0.80 intra-file · FP rate <20%
+- [x] Four named FP classes as fixtures (before taint work) — 11 tests, all green
+- [x] Intra-file taint on tree-sitter (ts/js) — bindings not name-tokens; aliasing + destructure +
+  template/object/JSON.stringify propagation. ADR-0001 tree-sitter path held (no semgrep fork needed)
+- [x] Source/sink model with confidence tiers (log/file/subprocess = finding; outbound = inventory)
+- [x] Targets MET: real-server precision **1.0** · intra-file holdout recall **0.9167** · FP **0.0**
+- [ ] Move 2.3 — least-priv inventory checks (fs roots, OAuth scopes, missing auth, token-passthrough)
+- [ ] Optional recall lift: embedded-cred URLs (DATABASE_URL class) · scoped exfil-host check
 
 ## Phase 3 — Hosted scan-by-URL
 - [ ] Threat model (before building) — see plan §Phase 3

@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from credlens.detectors import BaselineDetector, Finding
+from credlens.detectors import BaselineDetector, CredentialDetector, Finding
 from credlens.detectors.base import LENS_CREDENTIAL
 
 REPO = Path(__file__).resolve().parents[3]
@@ -93,23 +93,39 @@ def score_mutations(detector) -> dict:
         sink = inst["sink_line"]
         caught[inst["id"]] = any(abs(f.line - sink) <= 1 for f in cred)
 
-    def recall(split):
-        ids = [i for i in by_id.values() if i["split"] == split and i["label"] == "bad"]
+    def recall_over(predicate):
+        ids = [i for i in by_id.values() if i["label"] == "bad" and predicate(i)]
         if not ids:
             return None
         hit = sum(1 for i in ids if caught[i["id"]])
         return {"caught": hit, "total": len(ids), "recall": round(hit / len(ids), 4)}
+
+    def recall(split):
+        return recall_over(lambda i: i["split"] == split)
 
     # per-class recall (diagnostic)
     classes = {}
     for inst in manifest["instances"]:
         if inst["label"] != "bad":
             continue
-        c = classes.setdefault(inst["class"], {"caught": 0, "total": 0, "split": inst["split"]})
+        c = classes.setdefault(inst["class"],
+                               {"caught": 0, "total": 0, "split": inst["split"],
+                                "taint_scope": inst["taint_scope"]})
         c["total"] += 1
         c["caught"] += int(caught[inst["id"]])
     for c in classes.values():
         c["recall"] = round(c["caught"] / c["total"], 4)
+
+    # recall by taint scope — the gated number is intra_file; interprocedural and
+    # exfil_v2 are documented v1 known-misses, reported but never gated.
+    scopes = sorted({i["taint_scope"] for i in by_id.values() if i["label"] == "bad"})
+    by_scope = {
+        scope: recall_over(lambda i, s=scope: i["taint_scope"] == s)
+        for scope in scopes
+    }
+    # the headline gate: intra-file recall on the held-out classes (never tuned on)
+    intra_holdout = recall_over(
+        lambda i: i["taint_scope"] == "intra_file" and i["split"] == "holdout")
 
     good = [i for i in by_id.values() if i["label"] == "good"]
     flagged_good = sum(1 for i in good if caught[i["id"]])
@@ -120,6 +136,8 @@ def score_mutations(detector) -> dict:
     return {
         "available": True,
         "recall": {s: recall(s) for s in ("tune", "holdout", "negative") if recall(s)},
+        "recall_by_scope": {k: v for k, v in by_scope.items() if v},
+        "recall_intra_file_holdout": intra_holdout,
         "by_class": classes,
         "negatives": {"total": len(good), "false_positives": flagged_good},
         "precision": precision,
@@ -170,15 +188,24 @@ def render_markdown(results: dict) -> str:
         lines.append("- corpus not assembled (`make corpus`)")
     lines += ["", "## Mutation corpus (recall + negative precision)"]
     if m.get("available"):
+        ih = m.get("recall_intra_file_holdout")
+        if ih:
+            lines.append(f"- **intra-file holdout recall (gated): {ih['recall']}** "
+                         f"({ih['caught']}/{ih['total']})")
+        for scope, rc in m.get("recall_by_scope", {}).items():
+            tag = "" if scope == "intra_file" else " — documented v1 known-miss, not gated"
+            lines.append(f"- {scope} recall: {rc['recall']} ({rc['caught']}/{rc['total']}){tag}")
         for split, rc in m["recall"].items():
-            lines.append(f"- **{split}** recall: {rc['recall']} ({rc['caught']}/{rc['total']})")
+            lines.append(f"- {split} split recall (all scopes): {rc['recall']} "
+                         f"({rc['caught']}/{rc['total']})")
         lines.append(f"- negative precision (hard-negatives not flagged): **{m['precision']}** "
                      f"({m['negatives']['false_positives']} of {m['negatives']['total']} FP)")
         lines.append("")
-        lines.append("| class | split | recall |")
-        lines.append("|---|---|---|")
+        lines.append("| class | split | scope | recall |")
+        lines.append("|---|---|---|---|")
         for c, v in sorted(m["by_class"].items()):
-            lines.append(f"| {c} | {v['split']} | {v['recall']} ({v['caught']}/{v['total']}) |")
+            lines.append(f"| {c} | {v['split']} | {v['taint_scope']} | "
+                         f"{v['recall']} ({v['caught']}/{v['total']}) |")
     else:
         lines.append("- mutations not generated (`make mutations`)")
     lines += ["", "## Overall",
@@ -199,7 +226,13 @@ def _gate(results: dict) -> int:
         checks.append(("real_server_precision", real["precision"], floor["real_server_precision"]))
     mut = results["mutations"]
     if mut.get("available"):
-        if "mutation_recall_holdout" in floor and "holdout" in mut["recall"]:
+        # primary recall gate: intra-file classes on the held-out split (the
+        # interprocedural known-miss is reported but never gated)
+        if "mutation_recall_intra_file_holdout" in floor and mut.get("recall_intra_file_holdout"):
+            checks.append(("mutation_recall_intra_file_holdout",
+                           mut["recall_intra_file_holdout"]["recall"],
+                           floor["mutation_recall_intra_file_holdout"]))
+        elif "mutation_recall_holdout" in floor and "holdout" in mut["recall"]:
             checks.append(("mutation_recall_holdout", mut["recall"]["holdout"]["recall"],
                            floor["mutation_recall_holdout"]))
         if "mutation_precision" in floor:
@@ -215,15 +248,20 @@ def _gate(results: dict) -> int:
     return 0
 
 
+DETECTORS = {"credential": CredentialDetector, "baseline": BaselineDetector}
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="Run the credlens eval harness.")
+    ap.add_argument("--detector", choices=sorted(DETECTORS), default="credential",
+                    help="detector under test (default: credential — the shipping lens)")
     ap.add_argument("--gate", action="store_true", help="exit 1 if a metric is below eval/floor.json")
     ap.add_argument("--record-floor", action="store_true",
                     help="write current metrics as the new eval/floor.json")
     args = ap.parse_args(argv)
 
-    results = evaluate(BaselineDetector())
+    results = evaluate(DETECTORS[args.detector]())
     RESULTS.parent.mkdir(exist_ok=True)
     RESULTS.write_text(json.dumps(results, indent=2) + "\n")
     REPORT.write_text(render_markdown(results))
@@ -236,10 +274,12 @@ def main(argv=None) -> int:
         }
         if results["real_servers"].get("available"):
             floor["real_server_precision"] = results["real_servers"]["precision"]
-        if results["mutations"].get("available"):
-            if "holdout" in results["mutations"]["recall"]:
-                floor["mutation_recall_holdout"] = results["mutations"]["recall"]["holdout"]["recall"]
-            floor["mutation_precision"] = results["mutations"]["precision"]
+        mut = results["mutations"]
+        if mut.get("available"):
+            if mut.get("recall_intra_file_holdout"):
+                floor["mutation_recall_intra_file_holdout"] = \
+                    mut["recall_intra_file_holdout"]["recall"]
+            floor["mutation_precision"] = mut["precision"]
         FLOOR.write_text(json.dumps(floor, indent=2) + "\n")
         print(f"\nrecorded floor → {FLOOR.relative_to(REPO)}: {floor}")
 

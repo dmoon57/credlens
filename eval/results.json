@@ -1,95 +1,122 @@
 {
-  "detector": "baseline",
+  "detector": "credential",
   "real_servers": {
     "available": true,
-    "credential_findings": 3,
+    "credential_findings": 0,
     "true_positive": 0,
-    "false_positive": 3,
-    "precision": 0.0,
-    "examples": [
-      "servers-archived/brave-search/index.ts:84 Secret value (BRAVE_API_KEY) may reach a sink",
-      "servers-archived/gitlab/index.ts:62 Secret value (GITLAB_PERSONAL_ACCESS_TOKEN) may reach a sink",
-      "servers-archived/google-maps/index.ts:139 Secret value (GOOGLE_MAPS_API_KEY) may reach a sink"
-    ]
+    "false_positive": 0,
+    "precision": 1.0,
+    "examples": []
   },
   "mutations": {
     "available": true,
     "recall": {
       "tune": {
-        "caught": 65,
+        "caught": 45,
         "total": 108,
-        "recall": 0.6019
+        "recall": 0.4167
       },
       "holdout": {
-        "caught": 28,
+        "caught": 33,
         "total": 54,
-        "recall": 0.5185
+        "recall": 0.6111
       }
+    },
+    "recall_by_scope": {
+      "exfil_v2": {
+        "caught": 0,
+        "total": 54,
+        "recall": 0.0
+      },
+      "interprocedural": {
+        "caught": 0,
+        "total": 18,
+        "recall": 0.0
+      },
+      "intra_file": {
+        "caught": 78,
+        "total": 90,
+        "recall": 0.8667
+      }
+    },
+    "recall_intra_file_holdout": {
+      "caught": 33,
+      "total": 36,
+      "recall": 0.9167
     },
     "by_class": {
       "direct-env-log": {
         "caught": 15,
         "total": 18,
         "split": "tune",
+        "taint_scope": "intra_file",
         "recall": 0.8333
       },
       "aliased-log": {
-        "caught": 10,
+        "caught": 15,
         "total": 18,
         "split": "tune",
-        "recall": 0.5556
+        "taint_scope": "intra_file",
+        "recall": 0.8333
       },
       "template-log": {
-        "caught": 10,
+        "caught": 15,
         "total": 18,
         "split": "tune",
-        "recall": 0.5556
+        "taint_scope": "intra_file",
+        "recall": 0.8333
       },
       "secret-in-url": {
-        "caught": 10,
+        "caught": 0,
         "total": 18,
         "split": "tune",
-        "recall": 0.5556
+        "taint_scope": "exfil_v2",
+        "recall": 0.0
       },
       "secret-in-header": {
-        "caught": 10,
+        "caught": 0,
         "total": 18,
         "split": "tune",
-        "recall": 0.5556
+        "taint_scope": "exfil_v2",
+        "recall": 0.0
       },
       "secret-in-body": {
-        "caught": 10,
+        "caught": 0,
         "total": 18,
         "split": "tune",
-        "recall": 0.5556
+        "taint_scope": "exfil_v2",
+        "recall": 0.0
       },
       "cross-function-hop": {
         "caught": 0,
         "total": 18,
         "split": "holdout",
+        "taint_scope": "interprocedural",
         "recall": 0.0
       },
       "hardcoded-token": {
         "caught": 18,
         "total": 18,
         "split": "holdout",
+        "taint_scope": "intra_file",
         "recall": 1.0
       },
       "secret-to-file": {
-        "caught": 10,
+        "caught": 15,
         "total": 18,
         "split": "holdout",
-        "recall": 0.5556
+        "taint_scope": "intra_file",
+        "recall": 0.8333
       }
     },
     "negatives": {
       "total": 36,
-      "false_positives": 10
+      "false_positives": 0
     },
-    "precision": 0.9029
+    "precision": 1.0
   },
   "overall": {
-    "false_positive_rate": 0.1226,
+    "false_positive_rate": 0.0,
     "industry_baseline_note": "~78% flagged-findings-false is a single 33-server study \u2014 directional only, NOT our denominator (see README methodology)."
   }
 }

@@ -1,7 +1,7 @@
 {
-  "detector": "baseline",
+  "detector": "credential",
   "recorded": "set by --record-floor",
-  "real_server_precision": 0.0,
-  "mutation_recall_holdout": 0.5185,
-  "mutation_precision": 0.9029
+  "real_server_precision": 1.0,
+  "mutation_recall_intra_file_holdout": 0.9167,
+  "mutation_precision": 1.0
 }

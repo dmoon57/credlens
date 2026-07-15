@@ -41,8 +41,8 @@ jobs:
           CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.sha }})
           echo "$CHANGED"
           LABELS=$(echo "$CHANGED" | grep -c '^corpus/labels' || true)
-          CHECKS=$(echo "$CHANGED" | grep -c '^src/credlens/checks/' || true)
-          if [ "$LABELS" -gt 0 ] && [ "$CHECKS" -gt 0 ]; then
-            echo "::error::PR touches corpus/labels* AND src/credlens/checks/ together — split it."
+          DETECTORS=$(echo "$CHANGED" | grep -cE '^src/credlens/(checks|detectors)/' || true)
+          if [ "$LABELS" -gt 0 ] && [ "$DETECTORS" -gt 0 ]; then
+            echo "::error::PR touches corpus/labels* AND detector code together — split it (eval-integrity: never change the ground-truth labels and the code measured against them in one change)."
             exit 1
           fi

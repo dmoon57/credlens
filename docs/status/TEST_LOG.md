@@ -2,7 +2,7 @@
 type: status
 title: "credlens — test log"
 created_date: 2026-07-14
-last_modified: 2026-07-14 17:30 PDT
+last_modified: 2026-07-14 18:02 PDT
 ---
 
 # Test log
@@ -20,3 +20,13 @@ last_modified: 2026-07-14 17:30 PDT
   - **Regression gate red-then-green:** planted regression (disabled hardcoded-token detection) →
     holdout recall 0.5185→0.1852, `--gate` **exit 1** with `[FAIL]` lines; revert → `--gate` **exit
     0** `GATE PASSED`. Exit codes confirmed directly (not via a masking pipe).
+- **2026-07-14 18:02 PDT — Phase 2 credential lens.** `uv run pytest` → 25 passed (adds 11
+  credential-fixture tests + generator/harness updates). `uv run ruff check .` → clean.
+  - **Credential detector eval:** real-server credential precision **1.0** (0 findings on the
+    reference servers — all 3 baseline FPs killed); intra-file holdout recall **0.9167** (33/36);
+    intra-file overall 0.8667; negative precision **1.0** (0/36 FP); overall FP rate **0.0**.
+    Documented known-misses, reported not gated: outbound `exfil_v2` 0.0, interprocedural 0.0.
+  - **Four-FP-class fixtures:** name-not-value ×3, window-overshoot ×2, path-not-secret ×2 → 0
+    findings each; aliased-flow → finding at the sink line. Authored in an isolated subagent context.
+  - **Gate red-then-green at the new floor:** broke aliasing → holdout recall 0.9167→0.6389, gate
+    **exit 1**; revert → **exit 0**.

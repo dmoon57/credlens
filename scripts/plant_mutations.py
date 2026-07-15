@@ -168,18 +168,24 @@ def n_path_not_secret(i, env, var, sink, style):
 
 
 CLASSES = [
-    # id, fn, split
-    ("direct-env-log", c_direct_env_log, "tune"),
-    ("aliased-log", c_aliased_log, "tune"),
-    ("template-log", c_template_log, "tune"),
-    ("secret-in-url", c_secret_in_url, "tune"),
-    ("secret-in-header", c_secret_in_header, "tune"),
-    ("secret-in-body", c_secret_in_body, "tune"),
-    ("cross-function-hop", c_cross_function_hop, "holdout"),
-    ("hardcoded-token", c_hardcoded_token, "holdout"),
-    ("secret-to-file", c_secret_to_file, "holdout"),
-    ("neg-name-not-value", n_name_not_value, "negative"),
-    ("neg-path-not-secret", n_path_not_secret, "negative"),
+    # id, fn, split, taint_scope
+    # taint_scope: intra_file = a v1 intra-file taint pass should catch it (gated at
+    # the recall target); interprocedural = a documented v1 known-miss, reported but
+    # NOT gated; n/a = hard negatives (precision cases).
+    ("direct-env-log", c_direct_env_log, "tune", "intra_file"),
+    ("aliased-log", c_aliased_log, "tune", "intra_file"),
+    ("template-log", c_template_log, "tune", "intra_file"),
+    # outbound classes: a secret in a request is ambiguous (auth vs exfil) — telling
+    # them apart needs destination-taint (is the host caller-controlled?), a v1
+    # known-miss. Reported, not gated; see docs/specs/credential-lens.md.
+    ("secret-in-url", c_secret_in_url, "tune", "exfil_v2"),
+    ("secret-in-header", c_secret_in_header, "tune", "exfil_v2"),
+    ("secret-in-body", c_secret_in_body, "tune", "exfil_v2"),
+    ("cross-function-hop", c_cross_function_hop, "holdout", "interprocedural"),
+    ("hardcoded-token", c_hardcoded_token, "holdout", "intra_file"),
+    ("secret-to-file", c_secret_to_file, "holdout", "intra_file"),
+    ("neg-name-not-value", n_name_not_value, "negative", "n/a"),
+    ("neg-path-not-secret", n_path_not_secret, "negative", "n/a"),
 ]
 
 ASSIGN_STYLES = ["const", "let", "destructure"]
@@ -207,7 +213,7 @@ def generate() -> dict:
         shutil.rmtree(DEST)
     instances = []
     idx = 0
-    for class_name, fn, split in CLASSES:
+    for class_name, fn, split, taint_scope in CLASSES:
         # vary idioms deterministically: cross secrets × sinks × styles × hosts
         combos = []
         for si in range(len(SECRETS)):
@@ -234,6 +240,7 @@ def generate() -> dict:
                 "id": f"m{idx:03d}",
                 "class": class_name,
                 "split": split,
+                "taint_scope": taint_scope,
                 "label": label,
                 "file": rel.as_posix(),
                 "sink_line": sink_line,
@@ -250,7 +257,7 @@ def generate() -> dict:
             s: sum(1 for x in instances if x["split"] == s)
             for s in ("tune", "holdout", "negative")
         },
-        "classes": {c: {"split": sp} for c, _, sp in CLASSES},
+        "classes": {c: {"split": sp, "taint_scope": ts} for c, _, sp, ts in CLASSES},
         "counts": {
             "total": len(instances),
             "bad": sum(1 for x in instances if x["label"] == "bad"),

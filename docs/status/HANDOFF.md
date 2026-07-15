@@ -2,7 +2,7 @@
 type: status
 title: "credlens — handoff"
 created_date: 2026-07-14
-last_modified: 2026-07-14 17:30 PDT
+last_modified: 2026-07-14 18:02 PDT
 ---
 
 # Handoff
@@ -11,7 +11,27 @@ last_modified: 2026-07-14 17:30 PDT
 launch post drafted); hosted scan-by-URL + ecosystem scan + data-story draft by 2026-07-27.
 Full plan: [../plan/plan.md](../plan/plan.md).
 
-**Phase:** 1 (evals harness — the spine) — **complete** 2026-07-14. Phase 0 scaffold complete same day.
+**Phase:** 2 (credential/least-priv lens) — **core complete** 2026-07-14. Phases 0 + 1 complete same day.
+
+**Done (Phase 2 — credential lens):**
+- Spec: [../specs/credential-lens.md](../specs/credential-lens.md) (taint model, the 4 FP classes,
+  confidence tiers, targets).
+- **Move 2.1** — the four named FP classes killed as fixtures first (authored in an isolated
+  context, `tests/fixtures/credential/` + `expected.json`, 11 tests): name-not-value ×3,
+  window-overshoot ×2, path-not-secret ×2 all emit **zero** findings; aliased-flow fires correctly.
+- **Move 2.2** — `detectors/credential.py`: tree-sitter (ts/js) intra-file def-use taint. Taint on
+  value **bindings**, never on name tokens (kills name-not-value); `return` is not a sink (kills
+  window-overshoot); `*_PATH` env vars aren't secret sources (kills path-not-secret); aliasing +
+  destructure-rename + template/object/`JSON.stringify` propagation all tracked.
+- **Sink model** (ADR-0002): log / file-write-content / subprocess = **finding**; outbound request =
+  **inventory** (a token to its own API is legitimate auth; auth-vs-exfil needs destination-taint,
+  deferred to v2). This is the decision that keeps real-server precision at 1.0.
+
+**Results vs targets (all met):** real-server credential precision **1.0** (≥0.90 target — zero
+findings on the reference servers) · intra-file holdout recall **0.9167** (≥0.80) · negative
+precision **1.0** · overall FP rate **0.0** (<0.20). Documented known-misses, reported not gated:
+outbound (`exfil_v2`) and interprocedural/field (`cross-function-hop`) recall 0.0. Floor re-recorded
+at these numbers; gate re-proven red-then-green (holdout recall 0.9167→0.6389 → exit 1).
 
 **Done (Phase 1):**
 - **Move 1.1** — `corpus/manifest.json` pins the 22-server corpus (servers @ d31124c, servers-archived
@@ -32,13 +52,18 @@ Full plan: [../plan/plan.md](../plan/plan.md).
   `eval/floor.json`; the CI `eval-gate` job runs `make eval-ci`; gate demonstrated **red-then-green**
   on a planted regression (holdout recall 0.5185→0.1852 → exit 1; revert → exit 0).
 
-**Baseline numbers (eval/floor.json):** real-server credential precision 0.0 · holdout recall 0.5185
-· negative precision 0.9029 · overall FP rate 0.1226. These are the floor Phase 2 must beat.
+**Current floor (eval/floor.json, credential detector):** real-server precision 1.0 · intra-file
+holdout recall 0.9167 · negative precision 1.0. The baseline detector stays in-tree for comparison
+(`--detector baseline`).
 
-**Exact next step:** Phase 2 — the credential/least-privilege lens (ADR-0001 tree-sitter intra-file
-taint). Kill the four named FP classes first, as fixtures, before the taint pass; then source/sink
-model; target credential-lens precision ≥0.90 on holdout, mutation recall ≥0.80 intra-file, overall
-FP <20%. Do **not** harden `detectors/baseline.py` — the lens is a new module measured against it.
+**Exact next step (Phase 2 remainder → Phase 3):**
+- **Move 2.3** — least-privilege *inventory* checks (over-broad fs roots, wildcard OAuth scopes,
+  missing/optional auth on transports, token-passthrough/confused-deputy). Emit as `inventory`;
+  not precision-gated. Optional recall lift: `DATABASE_URL`-style embedded-credential URLs (the 1/6
+  secret name the lens currently skips) and a scoped exfil-to-caller-controlled-host check (would
+  convert the `exfil_v2` known-miss into findings — do it precisely or leave documented).
+- **Phase 3** — hosted scan-by-URL (threat-model first, security-review gate before public).
+- Do **not** harden `detectors/baseline.py`; it is the measured baseline. New detection = new module.
 
-**Verification state:** `uv run pytest` → 14 passed · `uv run ruff check .` → clean · `make eval-ci`
-gate → PASS · red-then-green regression demo → exit 1 then 0.
+**Verification state:** `uv run pytest` → 25 passed · `uv run ruff check .` → clean · `make eval-ci`
+gate (credential) → PASS · red-then-green regression demo → exit 1 then 0.

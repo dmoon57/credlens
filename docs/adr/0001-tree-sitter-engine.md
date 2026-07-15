@@ -30,3 +30,11 @@ relitigated after the trigger fires.
 
 - The project's moat stays in the evals + data story; the engine is deliberately swappable.
 - Cross-file/module taint is a documented known-miss class for v1, whichever engine wins.
+
+## Outcome (2026-07-14)
+
+The tree-sitter path **held** — the fork trigger did not fire. Intra-file def-use taint on
+tree-sitter (ts/js) cleanly kills all four named FP classes (real-server precision 1.0) and clears
+the intra-file recall target (holdout 0.9167), well inside the 2-day box. Interprocedural / instance-
+field flows remain the documented v1 known-miss (the `cross-function-hop` class), as anticipated.
+No semgrep migration needed for v1.

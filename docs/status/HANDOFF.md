@@ -2,7 +2,7 @@
 type: status
 title: "credlens — handoff"
 created_date: 2026-07-14
-last_modified: 2026-07-14 18:02 PDT
+last_modified: 2026-07-14 18:27 PDT
 ---
 
 # Handoff
@@ -11,7 +11,7 @@ last_modified: 2026-07-14 18:02 PDT
 launch post drafted); hosted scan-by-URL + ecosystem scan + data-story draft by 2026-07-27.
 Full plan: [../plan/plan.md](../plan/plan.md).
 
-**Phase:** 2 (credential/least-priv lens) — **core complete** 2026-07-14. Phases 0 + 1 complete same day.
+**Phase:** 2 (credential/least-priv lens) — **COMPLETE** 2026-07-14 (Moves 2.1–2.3). Phases 0 + 1 same day.
 
 **Done (Phase 2 — credential lens):**
 - Spec: [../specs/credential-lens.md](../specs/credential-lens.md) (taint model, the 4 FP classes,
@@ -32,6 +32,13 @@ findings on the reference servers) · intra-file holdout recall **0.9167** (≥0
 precision **1.0** · overall FP rate **0.0** (<0.20). Documented known-misses, reported not gated:
 outbound (`exfil_v2`) and interprocedural/field (`cross-function-hop`) recall 0.0. Floor re-recorded
 at these numbers; gate re-proven red-then-green (holdout recall 0.9167→0.6389 → exit 1).
+
+- **Move 2.3** — `detectors/leastpriv.py`: least-privilege **inventory** (ADR-0002, never scored
+  TP/FP): oauth-scope breadth, network-exposed transports (SSE/HTTP), fs-write/delete/exec/eval/
+  network capability, and token-passthrough (distinguishes a **caller-controlled** Authorization
+  value = confused-deputy from a server sending its **own** configured token — github/gitlab are NOT
+  flagged). Emits **0 findings** on real servers (precision untouched). The harness now prints an
+  **ecosystem permission-surface summary** (`eval/report.md`) — the blog-#2 data seed.
 
 **Done (Phase 1):**
 - **Move 1.1** — `corpus/manifest.json` pins the 22-server corpus (servers @ d31124c, servers-archived
@@ -56,14 +63,18 @@ at these numbers; gate re-proven red-then-green (holdout recall 0.9167→0.6389 
 holdout recall 0.9167 · negative precision 1.0. The baseline detector stays in-tree for comparison
 (`--detector baseline`).
 
-**Exact next step (Phase 2 remainder → Phase 3):**
-- **Move 2.3** — least-privilege *inventory* checks (over-broad fs roots, wildcard OAuth scopes,
-  missing/optional auth on transports, token-passthrough/confused-deputy). Emit as `inventory`;
-  not precision-gated. Optional recall lift: `DATABASE_URL`-style embedded-credential URLs (the 1/6
-  secret name the lens currently skips) and a scoped exfil-to-caller-controlled-host check (would
+**Exact next step (Phase 2 done → Phase 3):**
+- **Phase 3 — hosted scan-by-URL.** Threat-model the tool's own surface FIRST (SSRF via clone URL,
+  zip-bomb/monster repos, symlink escape, parser DoS, **stored XSS in findings pages**, abuse) — see
+  [../plan/plan.md](../plan/plan.md) §Phase 3. Parse-only (never execute target code); GitHub-URL
+  allowlist. Ship behind a **security-review gate** before public (fallback: static demo of
+  pre-scanned reports).
+- **Optional recall lift** (any time, no build dep): `DATABASE_URL`-style embedded-credential URLs
+  (the 1/6 secret name the lens skips) · a scoped exfil-to-caller-controlled-host check (would
   convert the `exfil_v2` known-miss into findings — do it precisely or leave documented).
-- **Phase 3** — hosted scan-by-URL (threat-model first, security-review gate before public).
+- **Launch post #1** ("why": threat model + the skipped credential dimension) — no build dependency,
+  draftable any day from the spec + research.
 - Do **not** harden `detectors/baseline.py`; it is the measured baseline. New detection = new module.
 
-**Verification state:** `uv run pytest` → 25 passed · `uv run ruff check .` → clean · `make eval-ci`
+**Verification state:** `uv run pytest` → 31 passed · `uv run ruff check .` → clean · `make eval-ci`
 gate (credential) → PASS · red-then-green regression demo → exit 1 then 0.

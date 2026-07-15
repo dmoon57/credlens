@@ -6,6 +6,7 @@ from .base import (
 )
 from .baseline import BaselineDetector
 from .credential import CredentialDetector
+from .leastpriv import LeastPrivDetector
 
 __all__ = [
     "Detector",
@@ -14,4 +15,5 @@ __all__ = [
     "LENS_CAPABILITY",
     "BaselineDetector",
     "CredentialDetector",
+    "LeastPrivDetector",
 ]

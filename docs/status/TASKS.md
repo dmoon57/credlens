@@ -2,7 +2,7 @@
 type: status
 title: "credlens — tasks"
 created_date: 2026-07-14
-last_modified: 2026-07-14 18:02 PDT
+last_modified: 2026-07-14 18:27 PDT
 ---
 
 # Tasks
@@ -30,7 +30,10 @@ last_modified: 2026-07-14 18:02 PDT
   template/object/JSON.stringify propagation. ADR-0001 tree-sitter path held (no semgrep fork needed)
 - [x] Source/sink model with confidence tiers (log/file/subprocess = finding; outbound = inventory)
 - [x] Targets MET: real-server precision **1.0** · intra-file holdout recall **0.9167** · FP **0.0**
-- [ ] Move 2.3 — least-priv inventory checks (fs roots, OAuth scopes, missing auth, token-passthrough)
+- [x] Move 2.3 — least-priv inventory checks (`detectors/leastpriv.py`): oauth-scope breadth,
+  network-exposed transports, fs-write/delete/exec/eval/network capability, token-passthrough
+  (caller-controlled vs own-token). All `kind=inventory`; 0 findings on real servers; ecosystem
+  inventory summary in `eval/report.md`. 6 tests.
 - [ ] Optional recall lift: embedded-cred URLs (DATABASE_URL class) · scoped exfil-host check
 
 ## Phase 3 — Hosted scan-by-URL

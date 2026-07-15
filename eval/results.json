@@ -115,6 +115,44 @@
     },
     "precision": 1.0
   },
+  "inventory": {
+    "available": true,
+    "leaked_findings": 0,
+    "by_category": {
+      "Secret value sent in an outbound request": {
+        "occurrences": 14,
+        "servers": 2
+      },
+      "Writes to the filesystem": {
+        "occurrences": 8,
+        "servers": 3
+      },
+      "Deletes filesystem entries": {
+        "occurrences": 7,
+        "servers": 2
+      },
+      "Makes outbound network requests": {
+        "occurrences": 6,
+        "servers": 6
+      },
+      "HTTP server": {
+        "occurrences": 4,
+        "servers": 1
+      },
+      "Network-exposed transport": {
+        "occurrences": 2,
+        "servers": 1
+      },
+      "Executes subprocesses": {
+        "occurrences": 1,
+        "servers": 1
+      },
+      "OAuth scopes declared": {
+        "occurrences": 1,
+        "servers": 1
+      }
+    }
+  },
   "overall": {
     "false_positive_rate": 0.0,
     "industry_baseline_note": "~78% flagged-findings-false is a single 33-server study \u2014 directional only, NOT our denominator (see README methodology)."

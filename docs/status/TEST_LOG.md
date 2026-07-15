@@ -2,7 +2,7 @@
 type: status
 title: "credlens — test log"
 created_date: 2026-07-14
-last_modified: 2026-07-14 18:02 PDT
+last_modified: 2026-07-14 18:27 PDT
 ---
 
 # Test log
@@ -30,3 +30,10 @@ last_modified: 2026-07-14 18:02 PDT
     findings each; aliased-flow → finding at the sink line. Authored in an isolated subagent context.
   - **Gate red-then-green at the new floor:** broke aliasing → holdout recall 0.9167→0.6389, gate
     **exit 1**; revert → **exit 0**.
+- **2026-07-14 18:27 PDT — Move 2.3 least-priv inventory.** `uv run pytest` → 31 passed (+6 leastpriv:
+  everything-is-inventory, confused-deputy-flagged, own-token-not-passthrough, scope-breadth,
+  aggregate-once-per-file, real-servers-zero-findings). `uv run ruff check .` → clean. Credential gate
+  unchanged → PASS.
+  - **Ecosystem inventory (real servers, `eval/report.md`):** 0 asserted findings leaked; surface =
+    secret-in-outbound 14/2 servers · fs-write 8/3 · fs-delete 7/2 · outbound-network 6/6 · http-server
+    4/1 · network-transport 2/1 · subprocess 1/1 · oauth-scope 1/1 (gdrive, narrow). The blog-#2 seed.

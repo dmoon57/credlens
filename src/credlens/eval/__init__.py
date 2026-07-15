@@ -22,7 +22,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from credlens.detectors import BaselineDetector, CredentialDetector, Finding
+from collections import Counter
+
+from credlens.detectors import (
+    BaselineDetector,
+    CredentialDetector,
+    Finding,
+    LeastPrivDetector,
+)
 from credlens.detectors.base import LENS_CREDENTIAL
 
 REPO = Path(__file__).resolve().parents[3]
@@ -144,9 +151,48 @@ def score_mutations(detector) -> dict:
     }
 
 
+def score_inventory() -> dict:
+    """Least-privilege permission surface across the real servers (never scored TP/FP).
+
+    Runs the least-priv + credential detectors, tallies inventory by category and by
+    how many distinct servers exhibit it — the 'permission surface of the MCP ecosystem'
+    data. Asserts these emit zero `kind="finding"` (so precision is unaffected)."""
+    if not SERVERS.exists():
+        return {"available": False}
+    detectors = [LeastPrivDetector(), CredentialDetector()]
+    by_category: Counter = Counter()
+    servers_with: dict[str, set] = {}
+    leaked_findings = 0
+    for path in sorted(SERVERS.rglob("*")):
+        if path.suffix not in SCAN_SUFFIXES or not path.is_file():
+            continue
+        rel = path.relative_to(SERVERS).as_posix()
+        if rel.startswith("local/"):
+            continue
+        server = "/".join(rel.split("/")[:2])  # source/server
+        text = path.read_text(errors="replace")
+        for det in detectors:
+            for f in det.scan_text(rel, text):
+                if f.kind != "inventory":
+                    leaked_findings += 1  # a least-priv/inventory pass must never assert
+                    continue
+                cat = f.message.split("(")[0].split("—")[0].strip().rstrip(":")
+                by_category[cat] += 1
+                servers_with.setdefault(cat, set()).add(server)
+    return {
+        "available": True,
+        "leaked_findings": leaked_findings,
+        "by_category": {
+            cat: {"occurrences": n, "servers": len(servers_with.get(cat, ()))}
+            for cat, n in by_category.most_common()
+        },
+    }
+
+
 def evaluate(detector) -> dict:
     real = score_real_servers(detector)
     mut = score_mutations(detector)
+    inventory = score_inventory()
 
     # overall FP rate across all asserted credential findings the detector emitted
     fp = 0
@@ -164,6 +210,7 @@ def evaluate(detector) -> dict:
         "detector": detector.name,
         "real_servers": real,
         "mutations": mut,
+        "inventory": inventory,
         "overall": {
             "false_positive_rate": fp_rate,
             "industry_baseline_note": "~78% flagged-findings-false is a single 33-server study — directional only, NOT our denominator (see README methodology).",
@@ -208,6 +255,16 @@ def render_markdown(results: dict) -> str:
                          f"{v['recall']} ({v['caught']}/{v['total']}) |")
     else:
         lines.append("- mutations not generated (`make mutations`)")
+    inv = results.get("inventory", {})
+    if inv.get("available"):
+        lines += ["", "## Least-privilege inventory (real servers — never scored TP/FP)"]
+        lines.append(f"- asserted findings leaked into inventory pass: "
+                     f"**{inv['leaked_findings']}** (must be 0)")
+        lines.append("")
+        lines.append("| category | occurrences | servers |")
+        lines.append("|---|---|---|")
+        for cat, v in inv["by_category"].items():
+            lines.append(f"| {cat} | {v['occurrences']} | {v['servers']} |")
     lines += ["", "## Overall",
               f"- false-positive rate: **{results['overall']['false_positive_rate']}**",
               f"- _{results['overall']['industry_baseline_note']}_", ""]

@@ -25,6 +25,20 @@
 | secret-to-file | holdout | intra_file | 0.8333 (15/18) |
 | template-log | tune | intra_file | 0.8333 (15/18) |
 
+## Least-privilege inventory (real servers — never scored TP/FP)
+- asserted findings leaked into inventory pass: **0** (must be 0)
+
+| category | occurrences | servers |
+|---|---|---|
+| Secret value sent in an outbound request | 14 | 2 |
+| Writes to the filesystem | 8 | 3 |
+| Deletes filesystem entries | 7 | 2 |
+| Makes outbound network requests | 6 | 6 |
+| HTTP server | 4 | 1 |
+| Network-exposed transport | 2 | 1 |
+| Executes subprocesses | 1 | 1 |
+| OAuth scopes declared | 1 | 1 |
+
 ## Overall
 - false-positive rate: **0.0**
 - _~78% flagged-findings-false is a single 33-server study — directional only, NOT our denominator (see README methodology)._

@@ -81,10 +81,26 @@ rest are `kind="inventory"` and never scored TP/FP.
 
 ## Least-privilege inventory (Move 2.3)
 
-Static, cheap, framed as **inventory** unless provably wrong: over-broad fs roots,
-wildcard OAuth scopes, missing/optional auth on network transports, token-passthrough /
-confused-deputy shapes (an inbound token forwarded to an outbound request to a
-caller-influenced host). v1 emits these as inventory; they are not precision-gated.
+Static, cheap, framed as **inventory** (`kind="inventory"`, ADR-0002) — the factual
+permission surface a reviewer wants, never counted TP/FP and never affecting precision.
+The v1 checks (`detectors/leastpriv.py`), grounded in what the reference corpus actually
+contains, aggregate **one item per category per file**:
+
+- **oauth-scope** — declared OAuth scopes (`scopes: [...]`), each tagged breadth
+  `narrow` (`*.readonly`/`read`) vs `broad` (full/write/admin/wildcard). *(gdrive
+  declares `drive.readonly` — narrow, good.)*
+- **network-exposed-transport** — `SSEServerTransport` / `StreamableHTTPServerTransport`
+  / `express()` / `http.createServer` with no visible auth check. *(the `everything`
+  server exposes SSE + HTTP.)* Stdio transport is local, not flagged.
+- **capability** — raw capability regardless of secrets: `fs-write`, `fs-delete`,
+  `process-exec`, `dynamic-eval`, `outbound-network`.
+- **token-passthrough / confused-deputy** — a **caller-controlled** value (a function
+  parameter / tool arg) used as an `Authorization` credential on an outbound request.
+  This is the genuine confused-deputy shape — distinct from a server sending its *own*
+  configured token (github/gitlab do that; **not** flagged).
+
+These emit **zero `kind="finding"`** by construction, so real-server precision stays 1.0.
+The aggregate becomes the "permission surface of the MCP ecosystem" data for the report.
 
 ## Targets (from the wargame; argued never)
 

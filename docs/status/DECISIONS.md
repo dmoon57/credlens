@@ -2,7 +2,7 @@
 type: status
 title: "credlens — decisions"
 created_date: 2026-07-14
-last_modified: 2026-07-14 19:58 PDT
+last_modified: 2026-07-14 20:20 PDT
 ---
 
 # Decisions
@@ -45,3 +45,13 @@ last_modified: 2026-07-14 19:58 PDT
   re-examined at the `/cso` gate; fallback stands if rejected.
 - **2026-07-14 · Hosted concurrency: `fluid: false` + per-request detector instances** (codex
   finding 2). The detectors mutate internal state during a scan; correctness before concurrency.
+- **2026-07-14 · Publication semantics formalized as
+  [ADR-0003](../adr/0003-hosted-output-publication-semantics.md)** (codex round 2). On-demand
+  ephemeral output to the requester of an admitted scan = tool output; anything servable without
+  a fresh admitted request = publication under invariant 5. Plan §Phase 3 amended accordingly
+  ("shareable findings page" → click-to-run pointer + ephemeral results). Deliberately stricter
+  than the SSL-Labs/Observatory industry norm of persistent named result pages.
+- **2026-07-14 · ACL-scoped Upstash token is a public-launch precondition** (codex round 2
+  condition on the negotiated worker-isolation fix). If a `credlens:`-prefix ACL token can't be
+  provisioned, the hosted scan stays preview-only; the default full-privilege token never backs a
+  public deployment.

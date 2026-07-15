@@ -3,7 +3,7 @@ type: plan
 title: "credlens v1 — evals-first build plan"
 status: active
 created_date: 2026-07-14
-last_modified: 2026-07-14 15:09 PDT
+last_modified: 2026-07-14 20:20 PDT
 tags: [mcp, security, evals, static-analysis]
 ---
 
@@ -86,8 +86,15 @@ depth (TS-heavy corpus); dynamic/runtime behavior (rug-pulls, live manifest diff
 
 ## Phase 3 — Deploy: hosted scan-by-URL
 
-Minimal surface: GitHub URL in → shallow clone (depth 1, size cap, timeout) → **parse-only** scan →
-shareable findings page. Threat-model the tool's own surface **before** building it:
+*Amended 2026-07-14 (codex rounds 1–2; [ADR-0003](../adr/0003-hosted-output-publication-semantics.md)):
+fetch is a pinned-host **tarball download** (not a clone), and the output is a **click-to-run share
+pointer with ephemeral results** — a persistent shareable findings page would publish unverified
+named findings, violating invariant 5. Binding detail now lives in
+[specs/hosted-scan.md](../specs/hosted-scan.md).*
+
+Minimal surface: GitHub URL in → pinned tarball fetch (size cap, timeout) → **parse-only** scan →
+ephemeral findings view behind a shareable click-to-run pointer. Threat-model the tool's own
+surface **before** building it:
 
 - SSRF via clone URL (`git://`, `file://`, redirects) → allowlist `https://github.com/…` only,
   resolve + validate before clone.

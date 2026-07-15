@@ -3,7 +3,7 @@ type: spec
 title: "Hosted scan-by-URL (Phase 3)"
 status: active
 created_date: 2026-07-14
-last_modified: 2026-07-14 19:55 PDT
+last_modified: 2026-07-14 20:15 PDT
 tags: [mcp, security, deploy, vercel, threat-model]
 ---
 
@@ -14,11 +14,14 @@ scan → findings for the requester. **This tool audits other people's security;
 the first thing a security-literate audience will probe.** The threat model below was written
 before any build code, and every mitigation in it is an acceptance criterion.
 
-> **v2 (2026-07-14).** Revised after codex adversarial round 1 (verdict REVISE, 21 findings — all
-> accepted; one fix negotiated). Deltas: ephemeral result policy (disclosure invariant), killable
-> scan worker, streamed extraction accounting, links rejected wholesale, output caps, POST +
-> Fetch-Metadata admission, atomic quotas + single-flight, enforced deployment protection, runtime
-> probe moved ahead of the build. Resolution map in the appendix.
+> **v3 (2026-07-14).** Codex round 1: REVISE, 21 findings → v2. Codex round 2: 12 resolved,
+> 8 partial, 8 new (2 blocking), negotiated worker isolation accepted-for-v1 with conditions →
+> this v3. Deltas: publication semantics formalized as [ADR-0003](../adr/0003-hosted-output-publication-semantics.md)
+> + plan amendment; request-level admission before any cache/revalidation work; parent-boundary
+> framing and validation of everything the worker or Redis returns; per-file progress deadline;
+> explicit gzip metering boundary; lease/WAF/spend/body-cap numbers; revalidation state machine;
+> process-group kill + parent-owned tmpdir; hosted redaction boundary. Resolution maps in the
+> appendix.
 
 ## Goal & acceptance criteria
 
@@ -26,9 +29,10 @@ before any build code, and every mitigation in it is an acceptance criterion.
   manifest) for the person who requested the scan.
 - The synthetic control scans end-to-end through the URL surface (plan verification path).
 - Every adversarial fixture in §Verification is handled safely (rejected or rendered inert).
-- Scan path stays deterministic: **no LLM calls, no target-code execution** (CLAUDE.md invariant 2).
-- **Results are ephemeral** — no persistent, GET-servable page asserts unverified findings about a
-  named repo (CLAUDE.md invariant 5; §Result policy).
+- Scan path stays deterministic: **no LLM calls, no target-code execution** (CLAUDE.md
+  invariant 2); the shared scanner performs **no network I/O** (§No-network boundary).
+- **Results are ephemeral** per [ADR-0003](../adr/0003-hosted-output-publication-semantics.md) —
+  no persistent, GET-servable output asserts unverified findings about a named repo.
 - **No unprotected deployment at any point:** every pre-gate deployment runs behind Vercel
   Deployment Protection, asserted by an unauthenticated-denial test, until the `/cso` gate and
   operator approval open it.
@@ -39,25 +43,30 @@ Accounts/auth · scan history UI · non-GitHub hosts · private repos · monorep
 LLM triage · re-scan scheduling · badges/API for third parties · verified-findings curation
 workflow (post-v1; until it exists, only ephemeral results).
 
-## Result policy (disclosure invariant, codex #6/#7/#14)
+## Result policy (ADR-0003; codex r1 #6/#7/#14, r2 #6/#7)
 
-CLAUDE.md invariant 5: named findings about real projects are never *published* unverified. A
-persistent shareable page of machine findings **is** publication. Therefore:
-
-- **Share URL = pointer, not archive.** `/scan/{owner}/{repo}` is shareable, but it renders a
-  landing card (repo name, limits, methodology) with an explicit **"Run scan" click** — it never
-  auto-runs or auto-displays findings. Results render only after the visitor's own admitted POST,
-  with `Cache-Control: no-store`, under a fixed banner: *automated, unverified results; strings
-  below derive from the scanned repository*.
-- **No secret material in results, structurally.** The hosted result schema is frozen to the
-  existing `Finding` fields (`file`, `line`, `lens`, `kind`, `message`, `confidence`) — no snippet
-  field exists and none may be added for hosted use; messages carry identifier names, never
-  matched values. A test plants a live-shaped token and asserts its value never appears in the JSON.
-- **The internal cache is cost control, not publication:** keyed `casefold(owner)/casefold(repo)`,
-  TTL **24 h**, value records tarball sha256 + scan time (digest + time displayed). It is only ever
-  served to an admitted POST, **after revalidating the repo is still publicly reachable** (cheap
-  HEAD-equivalent probe; probe failure ⇒ cache entry deleted, scan re-attempted or 404). Operator
-  purge path: a documented `redis del` one-liner per key.
+- **Share URL = pointer, not archive.** `/scan/{owner}/{repo}` renders a landing card (repo name,
+  limits, methodology) with an explicit **"Run scan" click** — it never auto-runs or auto-displays.
+  Results render only after the visitor's own admitted POST, `Cache-Control: no-store`, under a
+  fixed banner: *automated, unverified results; strings below derive from the scanned repository*.
+- **Hosted redaction boundary (r2 #7).** The `Finding` schema has no snippet field and none may be
+  added for hosted use — but `message`/`file` are arbitrary strings and least-priv messages embed
+  raw repo values. So the hosted serializer (parent-side, §Worker boundary) additionally **redacts
+  token-shaped and high-entropy substrings** (the detector's own source-shape rules, reused) from
+  every outbound string field and enforces per-field byte caps. Test: a live-shaped token planted
+  in an OAuth scope value never appears in response JSON.
+- **Internal cache = cost control, never publication:** keyed `casefold(owner)/casefold(repo)`,
+  TTL **24 h**, value records tarball sha256 + scan time (digest + time displayed); only ever
+  served into an admitted POST response, after revalidation:
+- **Revalidation state machine (r2 new #3):** a redirect-refusing HEAD of
+  `https://github.com/{owner}/{repo}` →
+  `200` = **public-at-this-path** ⇒ serve cache; `301/404/410/451` = **authoritatively
+  not-public-here** ⇒ delete entry, fall through to fresh-scan path; timeout/5xx/other =
+  **indeterminate** ⇒ `503 Retry-After`, **no deletion**. Successful revalidations are memoized
+  60 s (per repo key) so cache-hit floods don't multiply probes. Residual (documented): path-based
+  identity — a repo transferred and its name re-registered within the 24 h TTL could serve the
+  predecessor's results under the successor's name until expiry; digest + scan time on the page
+  bound the confusion. Operator purge path: documented `DEL credlens:cache:<key>` one-liner.
 
 ## Architecture
 
@@ -65,54 +74,77 @@ persistent shareable page of machine findings **is** publication. Therefore:
 detection logic — the published eval numbers describe exactly the hosted code. Verified locally
 2026-07-14: all four tree-sitter packages resolve as manylinux2014/abi3 x86_64 wheels for CPython
 3.12 (~2.4 MB); runtime import + subprocess semantics are proven by the **runtime probe milestone
-(3.2a) before the core build**. Vercel Python runtime is Beta — that risk is priced by the probe
-and the always-green fallback.
+(3.2a) before the core build**. Vercel Python runtime is Beta — priced by the probe and the
+always-green fallback.
 
-**Concurrency model (codex #2):** `fluid: false` for v1 — one invocation per process. No detector
-instance or mutable scan state at module scope; detectors are constructed per request (they mutate
+**Concurrency model (r1 #2):** `fluid: false` for v1 — one invocation per process. No detector
+instance or mutable scan state at module scope; detectors constructed per request (they mutate
 internal state, e.g. `_src`, during a scan). A two-repo concurrent test asserts unique markers
 never cross results.
 
-**Isolation (codex #1/#4, negotiated):** extraction + parsing — everything that touches hostile
-bytes — runs in a **separately killable worker subprocess with a scrubbed environment** (empty env:
-no Upstash token, no proxy vars) and a parent-enforced deadline + RSS cap. Python exceptions skip
-one file; **native worker death (segfault/hang-kill) fails the whole scan and is never cached as
-complete**. The parent (handler) holds the only secret: an Upstash token, **ACL-restricted** to the
-required commands and the `credlens:` key prefix — not the default full-privilege token. Residual
-(documented, accepted): a same-uid native RCE in the worker could theoretically reach the parent's
-env via /proc; the mitigations are parse-only design, the ACL scope bounding blast radius to cache/
-quota keys, and ephemeral results (a poisoned cache can't serve a persistent page). If `/cso`
-rejects this residual, the pre-committed fallback applies.
+**Isolation (r1 #1/#4 negotiated; r2 accepted-for-v1 with conditions):** extraction + parsing —
+everything touching hostile bytes — runs in a **separately killable worker subprocess**:
+
+- **Scrubbed environment** (empty env: no Upstash token, no proxy vars); the parent holds the only
+  secret — an Upstash token **ACL-restricted to the `credlens:` key prefix and required commands**.
+  **Condition (r2): if an ACL-scoped token cannot be provisioned, public launch is blocked** —
+  default full-privilege token is preview-only, full stop.
+- **Process-group containment (r2 new #6):** the parent creates the tmpdir and removes it in
+  `finally`; the worker runs in its own process group (`setsid`); on deadline or failure the parent
+  kills and reaps the **group**; inherited descriptors closed. Repeated forced-death test asserts
+  no `/tmp` accumulation and no surviving descendants.
+- **Per-file progress deadline (r1 #1 partial → r2 #1):** the `Detector` protocol has no timeout
+  parameter and detector code stays untouched — so the enforceable mechanism is the worker's
+  progress stream: it emits a marker before each file; the parent kills the group if any single
+  file stalls > **5 s** or the whole scan exceeds its budget. Python exceptions inside the worker
+  skip one file into the coverage manifest; **native death or progress-stall kill fails the whole
+  scan, which is never cached as complete**.
+- **Parent-boundary framing (r2 new #2, blocking):** the worker returns results over a pipe as
+  **length-prefixed JSON with a parent-enforced 2 MiB frame cap**; worker stdout/stderr reads are
+  capped (64 KiB, truncated); the parent **schema-validates before anything else** — enum values,
+  field allowlist, per-field byte caps, extra fields rejected. Only the parent serializes, redacts
+  (§Result policy), and writes to Redis; Redis **reads** are likewise size-capped and
+  schema-validated before serving. A compromised worker or poisoned cache value yields a 500, not
+  parent memory exhaustion or schema smuggling.
+
+**No-network boundary (r2 new #7):** the shared scanner (`scan_tree` + detectors) takes a local
+root path and performs no I/O beyond reading files under it — fetch, cache, and Upstash live only
+in the hosted layer, structurally outside the shared module. The eval path therefore stays
+network-free (CLAUDE.md invariant 2). Test: the shared scanner runs its full suite with socket
+creation monkeypatched to raise.
 
 **Fetch: GitHub tarball, never `git clone`.** The scanner downloads
 `https://codeload.github.com/{owner}/{repo}/tar.gz/HEAD` — a URL **constructed from validated
 components, never from the user's string**. No git binary, no `git://`/`file://`/ssh schemes, no
 `.git` config/hook tricks, no submodule surface. Unauthenticated codeload reaches public repos
-only → private repos are unreachable by construction, and **no GitHub token exists anywhere**.
+only → private repos unreachable by construction; **no GitHub token exists anywhere**.
 
-Request flow (order is normative — codex #15):
+Request flow (order is normative — r1 #15, r2 new #1/#4):
 
 ```
-POST /api/scan  (admission: method+content-type+custom header+Sec-Fetch-Site, §Interface)
+POST /api/scan
+  → request admission FIRST (method/headers/body caps + atomic request-rate limit, §Interface)
   → parse & canonicalize owner/repo (one parser, ASCII, casefold for keys)
-  → cache lookup (hit ⇒ revalidate-public ⇒ serve, no-store)
-  → atomic quota admission on miss (per-IP + global daily, one Lua script, fail closed)
-  → per-repo single-flight lease + global active-scan lease (TTL'd; full ⇒ 429/202)
+  → cache lookup (hit ⇒ revalidate [60 s memo, state machine] ⇒ serve, no-store)
+  → in-flight check (per-repo lease held ⇒ 202 + Retry-After, NO scan-budget charge)
+  → atomic scan-budget admission (per-IP 10/h + global 200/day, one Lua script, fail closed)
+  → acquire per-repo single-flight + global active-scan lease (owner-token'd, TTL'd)
   → codeload fetch (pinned host, redirects refused, streamed byte cap, proxy-blind opener)
-  → worker subprocess (scrubbed env): streamed tar extract w/ metered accounting → scan_tree
-  → coverage manifest + capped findings JSON → cache put (TTL 24 h) → response (no-store)
+  → worker subprocess (scrubbed env, own pgroup): metered extract → scan_tree → framed result
+  → parent: validate frame → redact → coverage manifest + caps → cache put (TTL 24 h)
+  → response (no-store)   [finally: release leases by owner token, remove tmpdir]
 ```
 
 Components:
 
-- `api/scan.py` — the single dynamic endpoint (stdlib-only handler; exact contract in §Interface).
+- `api/scan.py` — the single dynamic endpoint (stdlib-only handler; contract in §Interface).
 - `web/index.html`, `web/scan.html` + **external `web/scan.js`/`scan.css`** (no inline script/
-  style/handlers — CSP is header-delivered and `'self'`-only; codex #12); `/scan/{owner}/{repo}`
-  rewrites to `scan.html` via an **anchored two-segment rewrite**, everything else 404s.
+  style/handlers; CSP header-delivered, `'self'`-only); `/scan/{owner}/{repo}` rewrites to
+  `scan.html` via an **anchored two-segment rewrite**, everything else 404s.
 - `src/credlens/scan.py` — shared tree walker factored out of `credlens.eval._run_detector`
   (pure refactor; detector code and labels untouched — eval-integrity invariant holds).
-- `src/credlens/hosted/` — fetch, streamed safe-extract, limits, worker protocol; unit-testable
-  with no network (fetcher injected; adversarial tarballs are local fixtures).
+- `src/credlens/hosted/` — fetch, streamed safe-extract, limits, worker protocol, redaction;
+  unit-testable with no network (fetcher injected; adversarial tarballs are local fixtures).
 
 ## Threat model
 
@@ -120,23 +152,23 @@ Every row is binding: a mitigation here is a test or a config, not a hope.
 
 | # | Threat | Vector | Mitigation | Residual |
 |---|--------|--------|------------|----------|
-| T1 | SSRF | `git://`, `file://`, redirects, internal hosts via crafted URL | The user string is **parsed, never fetched**: one parser, ASCII-only, `re.fullmatch` — `owner` `[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})`, `repo` `[A-Za-z0-9._-]{1,100}` **excluding `.` and `..`**; accepted forms: `owner/repo` or a literal-prefix `https://github.com/owner/repo` (no port/userinfo/query/fragment/percent-escapes, exactly two path segments); fetch URL rebuilt from components; host pinned to `codeload.github.com`; **custom urllib opener: no proxy discovery, redirects refused** (any 3xx = clean failure); https only | None known — the fetcher can only ever address codeload |
-| T2 | Resource bombs | gzip bomb, monster repo, 10⁶ files, link farms | Streamed download aborts over **30 MB compressed**; **streamed** tar walk (`r|gz`, never `getmembers()`/blind `extractall()`) through a **counted gzip reader**: caps on raw uncompressed tar bytes (**150 MB**), written file bytes (**100 MB**), members (**5 000**), per-file (**1 MB**), name length, duplicate resolved paths; **any over-cap member aborts the whole archive** (no skip-and-continue); **45 s scan wall-clock** inside one monotonic end-to-end deadline; worker RSS cap | Burst CPU within one invocation, bounded by timeout |
-| T3 | Path traversal / link escape | hostile member paths, symlink/hardlink members | `tarfile.data_filter` **wrapped in a stricter policy: only directories and regular files are accepted — every symlink, hardlink, sparse/special/unknown type is rejected** (data_filter alone permits inside-destination links — codex #10); extraction into per-request tmpdir; walker uses `lstat`-based checks, never follows links | None known; adversarial fixtures prove it |
-| T4 | Parser hang / native crash | pathological source files | Two tiers (codex #1): tree-sitter per-file parse timeout, **plus** the killable worker subprocess with parent deadline — a native hang/segfault kills the worker, **fails the scan, and is never cached as complete**; Python-level exceptions skip one file into the coverage manifest; **parse-only — target code never executes** | Native crash DoSes one request, never poisons results |
-| T5 | **XSS in findings view** | rendered strings originate in the scanned repo | Findings travel as **JSON only** (`application/json; charset=utf-8` + `nosniff` on **every** status); page renders **exclusively via `textContent`**; no inline script/style — external assets only; **CSP delivered as an HTTP header via vercel.json on every route** (`default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`) + `X-Frame-Options: DENY`; control/bidi chars rendered visibly-escaped (`<bdi>`/escapes — codex #13) | XSS requires both a renderer bug **and** a CSP bypass |
-| T6 | Abuse / cost DoS | scripted scan floods, cross-site amplification | **POST-only** scan admission: `application/json` + fixed custom header + `Sec-Fetch-Site` same-origin, **no CORS allowance** (kills cross-site `<img>`-farm amplification — codex #14); per-IP **10/h** + global **200/day** in **one atomic Lua script** (check+incr+expire; fail closed on Upstash error); IP = **`x-vercel-forwarded-for` only**, parsed via `ipaddress`, IPv6 quota'd at /64, fail closed if absent (codex #17); global active-scan lease + per-repo single-flight (TTL'd; 429 `Retry-After` / 202 in-flight — codex #16); cache makes repeats cheap | Post-cap request-layer spend bounded by WAF rule + spend management (deploy checklist, codex #18) |
-| T7 | Secrets near hostile input | worker compromise reads credentials | Hostile bytes are processed in the **env-scrubbed worker** (holds nothing); the parent holds the single secret — an **ACL-scoped** Upstash token (cache/quota keys only); no GitHub token, no LLM keys | /proc parent-env reach from a native worker RCE — documented, accepted for v1 (§Architecture); `/cso` re-examines |
-| T8 | Info disclosure | stack traces, tmp paths, env in errors | Uniform terse JSON errors (400/404/413/429/500/503 + short code); detail only in structured, escaped server logs | — |
-| T9 | Content spoofing / phishing | attacker-authored strings shown to visitors | Ephemeral render under a fixed banner naming the scanned repo + unverified-results notice; findings content never linkified; the only outbound link is `github.com/{owner}/{repo}` rebuilt from validated components | Screenshot spoofing — out of scope |
-| T10 | Cache poisoning / staleness / retention | cached results outliving repo visibility | Cache = cost control only (§Result policy): POST-gated, TTL 24 h, **revalidate-public before every cached serve** (fail ⇒ delete + re-scan/404), digest + scan time displayed, no secret material representable in the schema, operator purge path | ≤24 h staleness, displayed and honest |
-| T11 | Upstream drift (renames, redirects, LFS, empty/large repos) | codeload behavior is not a documented contract | Fail-closed: require status 200 **and** gzip magic bytes; any 3xx/other status = "upstream unsupported" error (never silently follow); an **upstream-compatibility acceptance matrix** (normal · renamed · transferred · empty · large · LFS) runs at 3.2a and before ship (codex #9) | A rename served transparently as 200 caches under the old name for ≤24 h |
-| T12 | Output amplification | small archive → millions of findings | Binding caps **before serialization or cache** (codex #3): 100 findings/file · 1 000 total · bounded UTF-8 byte length per field · 1 MiB serialized result; deterministic truncation with omitted-counts by reason; scan marked `partial` | — |
-| T13 | Silent partial coverage | unsupported language/extension reads as "clean" | **Versioned coverage manifest in every response** (codex #5): supported languages/extensions, files seen/scanned/skipped + reasons, deadline status, `complete|partial|failed`; prominent partial banner. Walker suffix set vs detector support reconciled in its own eval-gated change | — |
+| T1 | SSRF | `git://`, `file://`, redirects, internal hosts via crafted URL | The user string is **parsed, never fetched**: one parser, ASCII-only, `re.fullmatch` — `owner` `[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})`, `repo` `[A-Za-z0-9._-]{1,100}` **excluding `.` and `..`**; accepted forms: `owner/repo` or literal-prefix `https://github.com/owner/repo` (no port/userinfo/query/fragment/percent-escapes, exactly two path segments); fetch URL rebuilt from components; host pinned to `codeload.github.com`; **custom urllib opener: no proxy discovery, redirects refused** (any 3xx = clean failure); https only | None known — the fetcher can only ever address codeload |
+| T2 | Resource bombs | gzip bomb, monster repo, 10⁶ files, link farms | Streamed download aborts over **30 MB compressed**; **explicit metering boundary (r2 #11):** raw stream → compressed-byte counter (30 MB cap) → `gzip.GzipFile` → **decompressed-byte counter that raises at 150 MB** → `tarfile.open(mode="r|", fileobj=…)` — the tar layer only ever sees capped, already-metered plaintext; never `getmembers()`/blind `extractall()`; caps: written file bytes **100 MB**, members **5 000**, per-file **1 MB**, name length **512**, duplicate resolved paths rejected; **any over-cap member aborts the whole archive**; **45 s scan wall-clock** inside one monotonic end-to-end deadline; worker RSS cap | Burst CPU within one invocation, bounded by timeout |
+| T3 | Path traversal / link escape | hostile member paths, symlink/hardlink members | `tarfile.data_filter` **wrapped in a stricter policy: only directories and regular files accepted — every symlink, hardlink, sparse/special/unknown type rejected**; extraction into the parent-owned per-request tmpdir; walker uses `lstat`-based checks, never follows links | None known; adversarial fixtures prove it |
+| T4 | Parser hang / native crash | pathological source files | Two enforceable tiers: **per-file progress deadline (5 s) + whole-scan deadline**, both parent-enforced via the worker progress stream and process-group kill; Python exceptions skip one file into the coverage manifest; **native death / stall-kill fails the scan and is never cached as complete**; **parse-only — target code never executes** | Native crash DoSes one request, never poisons results |
+| T5 | **XSS in findings view** | rendered strings originate in the scanned repo | Findings travel as **JSON only** (`application/json; charset=utf-8` + `nosniff` on **every** status); page renders **exclusively via `textContent`**; no inline script/style — external assets only; **CSP delivered as an HTTP header via vercel.json on every route** (`default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`) + `X-Frame-Options: DENY`; **control & bidi chars (C0/C1, LRO/RLO/LRI/RLI/FSI/PDI/PDF, zero-width) visibly escaped as codepoint sequences before display** (r2 #13 — `textContent` + CSS `unicode-bidi: isolate` handle direction, escaping handles visibility); bidi/control fixture asserted via DOM | XSS requires both a renderer bug **and** a CSP bypass |
+| T6 | Abuse / cost DoS | scripted floods, cross-site amplification, cache-hit floods | **Request-level admission before any work (r2 new #1): atomic 60 POST/h/IP** limit ahead of cache/revalidation; scan budget (**10/h/IP + 200/day global**) charged **only on cache miss after the in-flight check**; all counters in **atomic Lua** (check+incr+expire, fail closed); POST-only + `application/json` + `X-Credlens-Scan: 1` + `Sec-Fetch-Site` same-origin/absent + **no CORS**; IP = **`x-vercel-forwarded-for` only**, `ipaddress`-parsed, IPv6 quota'd at /64, fail closed if absent; **leases (r2 #16): global active-scan cap 2, per-repo single-flight, TTL 90 s, random owner token, compare-and-delete release, no renewal (deadline < TTL)**; followers get **202 `{"status":"in-flight","retryAfter":5}` + `Retry-After: 5`, uncharged** (r2 new #4); cache makes repeats cheap | Post-cap request-layer spend bounded by WAF + spend caps (numbers below) |
+| T7 | Secrets near hostile input | worker compromise reads credentials | Hostile bytes processed in the **env-scrubbed worker** (holds nothing); parent holds the single **ACL-scoped** Upstash token (`credlens:` prefix + required commands only); **everything crossing back from the worker or Redis is capped, framed, and schema-validated at the parent boundary** before use; no GitHub token, no LLM keys. **ACL token unprovisionable ⇒ public launch blocked** (preview may run on the default token) | /proc parent-env reach from a native worker RCE — documented, accepted for v1 (r2 concurred); `/cso` re-examines |
+| T8 | Info disclosure | stack traces, tmp paths, env in errors | Uniform terse JSON errors (schema in §Interface); detail only in structured, escaped server logs | — |
+| T9 | Content spoofing / phishing | attacker-authored strings shown to visitors | Ephemeral render under a fixed banner naming the scanned repo + unverified notice; findings content never linkified; only outbound link is `github.com/{owner}/{repo}` rebuilt from validated components | Screenshot spoofing — out of scope |
+| T10 | Cache poisoning / staleness / retention | cached results outliving repo visibility or identity | Cache = cost control only: POST-gated, TTL 24 h, **revalidation state machine before every cached serve** (§Result policy — authoritative-gone deletes, indeterminate 503s without deleting, 60 s memo), digest + scan time displayed, redaction boundary strips secret-shaped content, size-capped schema-validated reads, operator purge path | Path-identity reuse within TTL (§Result policy residual); ≤24 h staleness, displayed |
+| T11 | Upstream drift | codeload behavior is not a documented contract | Fail-closed: require status 200 **and** gzip magic; any 3xx/other = "upstream unsupported" error. **Acceptance matrix with defined outcomes (r2 #9):** normal ⇒ 200 + scan completes · renamed/transferred ⇒ 3xx/404 ⇒ clean "not found under this name" error · empty repo ⇒ valid tarball, 0 scannable files, manifest `complete` · LFS ⇒ pointer files scanned as text, noted in limitations · over-limit repo ⇒ 413-style "exceeds limits" error. Probe passes iff every case produces its defined outcome | A rename served transparently as 200 caches under the old name ≤24 h |
+| T12 | Output amplification | small archive → millions of findings | Binding caps **at the parent boundary before serialization or cache**: 100 findings/file · 1 000 total · bounded UTF-8 bytes per field · 2 MiB worker frame · 1 MiB serialized result; deterministic truncation with omitted-counts by reason; scan marked `partial` | — |
+| T13 | Silent partial coverage | unsupported language/extension reads as "clean" | **Versioned coverage manifest in every response**: supported languages/extensions, files seen/scanned/skipped + reasons, deadline status, `complete|partial|failed`; prominent partial banner. Walker suffix set vs detector support reconciled in its own eval-gated change | — |
 
-Supply-chain posture: the web surface adds **zero new runtime dependencies** — stdlib `urllib`
-(fetch + Upstash REST), `tarfile`, `re`, `json`, `ipaddress`. Vercel build installs the existing
-pinned deps via `uv export`-generated hashed requirements.
+Supply-chain posture: zero new runtime dependencies — stdlib `urllib` (fetch + Upstash REST),
+`tarfile`, `gzip`, `re`, `json`, `ipaddress`. Vercel build installs the existing pinned deps via
+`uv export`-generated hashed requirements.
 
 ## Interface & limits
 
@@ -146,107 +178,122 @@ pinned deps via `uv export`-generated hashed requirements.
 | `GET /scan/{owner}/{repo}` | static share page — repo card + **Run scan** button; never auto-scans |
 | `POST /api/scan` | body `{"repo": "owner/repo"}` — admission → cached-or-fresh scan → JSON, `no-store` |
 
-**Handler contract (codex #19):** POST only (405 otherwise) · request-target length cap · exactly
-one `repo` value, strict ASCII (no percent-escape tricks) · `Content-Type: application/json`
-required · fixed custom header (`X-Credlens-Scan: 1`) required · `Sec-Fetch-Site` must be absent
-or `same-origin` · no CORS headers ever · uniform JSON error bodies · one **monotonic end-to-end
-deadline** spanning fetch → extract → scan → cache → response, with shorter per-stage deadlines ·
-structured escaped logging.
+**Handler contract (r1 #19, r2 #19/new #5):** POST only (405 otherwise) · request-target ≤ 256
+bytes · **`Content-Length` required and ≤ 1 024; raw body read capped at 1 024 bytes before JSON
+decoding** · body must be a JSON object with **exactly one member `repo`** (duplicate keys rejected
+via `object_pairs_hook`; extra members rejected) · strict ASCII, no percent-escape tricks ·
+`Content-Type: application/json` required · `X-Credlens-Scan: 1` required · `Sec-Fetch-Site`
+absent or `same-origin` · no CORS headers ever · one **monotonic end-to-end deadline** spanning
+fetch → extract → scan → cache → response with per-stage deadlines · structured escaped logging.
+
+**Response schemas (r2 #19):**
+- Success `200`: `{"schema": 1, "repo", "digest", "scanned_at", "coverage": {…}, "findings": […],
+  "inventory": […], "truncated": {…}|null}` — field set closed, byte-capped, redacted.
+- In-flight `202`: `{"status": "in-flight", "retryAfter": 5}` + `Retry-After: 5`.
+- Errors `4xx/5xx`: `{"error": "<short-code>"}` — closed enum
+  (`bad_request`, `not_found`, `payload_too_large`, `rate_limited`, `busy`, `upstream_unsupported`,
+  `scan_failed`, `unavailable`), never free text.
+All statuses: `application/json; charset=utf-8`, `nosniff`, `no-store`.
 
 Limits (displayed on the landing page — stated limitations are credibility):
-30 MB tarball · 150 MB raw uncompressed / 100 MB written · 5 000 files · 1 MB/file · 45 s scan ·
-1 000 findings (capped, marked partial) · 10 scans/h/IP · 200 scans/day global · cache TTL 24 h ·
-public GitHub repos only · results are ephemeral by design.
+30 MB tarball · 150 MB decompressed / 100 MB written · 5 000 files · 1 MB/file · 45 s scan ·
+5 s/file progress deadline · 1 000 findings (capped, marked partial) · 60 POST/h/IP ·
+10 scans/h/IP · 200 scans/day global · 2 concurrent scans · cache TTL 24 h · public GitHub repos
+only · results ephemeral by design ([ADR-0003](../adr/0003-hosted-output-publication-semantics.md)).
+
+**Deploy-time abuse economics (r2 #18, 3.4 acceptance criteria):** Vercel WAF rate-limit rule on
+`/api/scan` — **60 req/60 s per IP, block** (the request-layer bound above app quotas); Vercel
+Spend Management hard cap **$20/mo with auto-pause**; Upstash free-tier daily command budget is
+the Redis spend bound; limiter fails closed on Upstash error (no anonymous free scans).
 
 ## Decisions
 
 1. **Tarball over clone** — kills the git attack class structurally; size-cappable stream; private
    repos unreachable by construction.
 2. **Python runtime reusing the detectors** — no TS port; eval numbers describe the hosted code.
-3. **Stdlib-only web layer** — held at codex round 1 ("no gap found in choosing stdlib over
-   FastAPI"), now backed by the explicit handler contract above.
-4. **Upstash Redis via REST, ACL-scoped token** — rate-limit + cache; atomic Lua admission;
-   missing env or Upstash error ⇒ fail closed (no anonymous free scans).
-5. **Ephemeral results, share-URL-as-pointer** (codex #6) — the disclosure invariant outranks the
-   original "shareable findings page" phrasing in the plan. Verified-findings curation is post-v1.
-6. **`fluid: false` + per-request detector instances** (codex #2) — correctness before concurrency.
-7. **Worker isolation negotiated** (codex #4): env-scrubbed killable subprocess + ACL token instead
-   of a second secretless deployment — same intent, one deploy; residual documented in T7 and
-   re-examined at the `/cso` gate.
+3. **Stdlib-only web layer** — held at codex rounds 1–2; backed by the explicit handler contract.
+4. **Upstash Redis via REST, ACL-scoped token** — atomic Lua admission; fail closed; **no ACL ⇒
+   no public launch**.
+5. **Ephemeral results, share-URL-as-pointer** — formalized as
+   [ADR-0003](../adr/0003-hosted-output-publication-semantics.md); plan §Phase 3 amended.
+6. **`fluid: false` + per-request detector instances** — correctness before concurrency.
+7. **Worker isolation: env-scrubbed process-group subprocess + parent-boundary framing** — r2
+   judged acceptable-for-v1 with the ACL condition and parent-boundary hardening, both absorbed.
 
 ## Verification (before the phase is "done")
 
 Adversarial fixtures, built in an isolated context like all fixtures (working agreement):
-traversal tar (`../escape`) · absolute-path tar · symlink-escape tar · **internal-symlink tar** ·
-**hardlink-farm tar** (thousands of links to one 1 MB file — size-accounting bypass) · gzip bomb
-(multi-GB member early in the stream) · 6 000-file tar · >1 MB member (must abort archive, not
-skip) · duplicate-path tar · crash-shaped source file · **hanging-parser injection** (deadline
-kill) · **worker `os._exit`/segfault simulation** (scan fails, never cached) · **result-bomb repo**
-(findings caps + `partial`) · **planted live-shaped token** (value never appears in JSON) · repo
-whose strings are XSS payloads (`<img onerror>` in env names, tool descriptions, file paths) —
-rendered inert, asserted via DOM in a real browser (zero CSP violations), not eyeball.
+traversal tar (`../escape`) · absolute-path tar · symlink-escape tar · internal-symlink tar ·
+hardlink-farm tar · gzip bomb (multi-GB member early in the stream) · 6 000-file tar · >1 MB
+member (aborts archive, not skip) · duplicate-path tar · overlong-name tar · crash-shaped source
+file · hanging-parser injection (per-file 5 s stall kill) · worker `os._exit`/segfault simulation
+(scan fails, never cached) · **repeated forced worker deaths** (no `/tmp` accumulation, no
+surviving process-group descendants) · result-bomb repo (caps + `partial`) · planted live-shaped
+token **including in an OAuth scope value** (value never appears in JSON — redaction boundary) ·
+**oversized/malformed worker frame** (parent 500s cleanly) · **poisoned oversized cache value**
+(parent rejects on read) · XSS-payload repo (`<img onerror>` in env names, tool descriptions,
+file paths) rendered inert, asserted via DOM in a real browser (zero CSP violations) ·
+**bidi/control-character fixture** (RLO/zero-width in paths and messages → visible escapes).
 
-Plus: URL-validation unit tests (scheme/host/userinfo/port tricks, unicode confusables rejected by
-ASCII-only, `.`/`..`, casing → one casefolded cache key, encoded slashes, duplicate params) ·
-quota tests (429 behavior; atomicity under parallel fire; fail-closed on Upstash error; spoofed
-`X-Forwarded-For` ignored) · single-flight + active-lease parallel-load test (active scans never
-exceed the cap) · error-hygiene tests (no paths/traces in any response) · MIME/rewrite tests
-(exact content-types on every status incl. errors; anchored rewrite; extra segments 404) ·
-cross-request isolation test (two repos, unique markers never cross) · deployment-protection
-assertion (unauthenticated request → denied) · upstream acceptance matrix (T11) ·
-`vercel dev` smoke · the synthetic control scanned through the URL surface.
+Plus: URL-validation unit tests (scheme/host/userinfo/port tricks, unicode confusables, `.`/`..`,
+casing → one casefolded key, encoded slashes, duplicate params/keys, oversized body) · quota tests
+(request-level limit before cache work — **cached-hit flood consumes request budget, not scan
+budget**; atomicity under parallel fire; fail-closed on Upstash error; spoofed `X-Forwarded-For`
+ignored) · **follower-no-charge test** (202 path consumes no scan budget) · lease tests (active
+cap 2 held under parallel load; owner-token release; TTL expiry of a crashed holder) ·
+revalidation state-machine tests (200/301/404/timeout paths; 60 s memo; no delete on
+indeterminate) · error-hygiene (no paths/traces; closed error enum) · MIME/rewrite (exact types on
+every status; anchored rewrite; extra segments 404) · cross-request isolation (two repos, unique
+markers never cross) · **sockets-disabled run of the shared scanner suite** (no-network boundary) ·
+deployment-protection assertion (unauthenticated → denied) · upstream acceptance matrix (T11
+outcomes) · `vercel dev` smoke · the synthetic control scanned through the URL surface.
 
 ## Milestones & gates
 
-- **3.1 — spec + codex gate.** Round 1 returned REVISE (21 findings); this v2 resolves them.
-  **Round 2 re-review before any build code; converge to APPROVE(-WITH-CHANGES).**
-- **3.2a — runtime probe, protected** (codex #20): a minimal **Deployment-Protection-enabled**
-  deploy that imports every pinned wheel, parses one fixture, spawns and kills a hanging worker
-  subprocess, exercises `/tmp`, confirms `fluid: false` + explicit memory/`maxDuration`, and runs
-  the T11 upstream matrix. No public endpoint, no UI. Kill criterion: probe fails ⇒ fallback.
-- **3.2b — scan core, local**: `scan.py` walker factor-out + `hosted/` fetch/streamed-extract/
-  limits/worker, TDD against the adversarial fixtures. No network in tests.
-- **3.3 — web surface, local**: handler contract + static pages/assets + quotas + XSS/CSP/MIME
-  tests; `vercel dev` smoke.
-- **3.4 — gated deploy**: protected preview (protection asserted) → deployed-surface test suite →
-  **full `/cso` review** → fix findings → **operator approval** → WAF rule + spend caps confirmed
-  (codex #18) → public alias + README link.
+- **3.1 — spec + codex gate.** Round 1 REVISE (21) → v2; round 2 REVISE (8 partial + 8 new,
+  negotiated fix accepted) → v3. **Round 3 re-review; converge to APPROVE(-WITH-CHANGES) before
+  any build code.**
+- **3.2a — runtime probe, protected**: minimal Deployment-Protection-enabled deploy that imports
+  every pinned wheel, parses one fixture, spawns and **group-kills** a hanging worker, exercises
+  `/tmp` create/cleanup, confirms `fluid: false` + explicit memory/`maxDuration`, and runs the T11
+  matrix against its defined outcomes. Kill criterion: any case undefined/unsafe ⇒ fallback.
+- **3.2b — scan core, local**: `scan.py` factor-out + `hosted/` fetch/metered-extract/limits/
+  worker-protocol/redaction, TDD against the adversarial fixtures. No network in tests.
+- **3.3 — web surface, local**: handler contract + static pages/assets + atomic quotas/leases +
+  XSS/CSP/MIME/bidi tests; `vercel dev` smoke.
+- **3.4 — gated deploy**: protected preview (asserted) → deployed-surface test suite → **full
+  `/cso` review** → fix findings → **operator approval** → WAF rule + spend caps confirmed →
+  public alias + README link.
 
 ## Fallback (pre-committed)
 
-If the probe fails, the review fails, or the clock runs out: ship the CLI + a hosted **static demo
-of pre-scanned reports** (no user input = no attack surface) and defer live scan-by-URL. This path
-is always green — and it already satisfies the ephemeral-results policy trivially.
+If the probe fails, the review fails, ACL tokens are unavailable, or the clock runs out: ship the
+CLI + a hosted **static demo of pre-scanned reports** (no user input = no attack surface) and
+defer live scan-by-URL. This path is always green — and satisfies ADR-0003 trivially.
 
 ## Open questions
 
 - Vercel function memory/duration tier for worst-case scans — measured at 3.2a/3.4; plan's fork
   trigger: >30 % of scans hitting limits → job queue behind the same front.
-- Upstash ACL token availability on the current plan — checked when provisioning; if unavailable,
-  the default token is treated as a T7 residual escalation for `/cso` to judge.
 
-## Appendix — codex round-1 resolution map
+## Appendix — codex resolution maps
 
-| Finding | Resolution |
-|---|---|
-| 1 parser containment | T4 two-tier: ts timeout + killable worker; fail-never-cache |
-| 2 cross-request state | `fluid: false`, per-request instances, concurrent test (Arch, Decision 6) |
-| 3 output amplification | T12 caps + partial marking |
-| 4 secret in worker | Negotiated: env-scrubbed worker + ACL token; residual in T7 (Decision 7) |
-| 5 silent partial coverage | T13 coverage manifest; suffix fix routed as its own eval-gated change |
-| 6 disclosure invariant | §Result policy: ephemeral, click-to-run, no-store (Decision 5) |
-| 7 cache retention | TTL 24 h, revalidate-public, schema freeze, token-never-in-JSON test, purge path |
-| 8 identifier grammar | T1: one parser, fullmatch, `.`/`..` excluded, casefolded keys |
-| 9 codeload assumptions | T11 fail-closed + upstream acceptance matrix at 3.2a |
-| 10 data_filter gaps | T3 stricter wrapper: dirs + regular files only; lstat walker |
-| 11 gzip accounting | T2 streamed counted reader, no getmembers, abort-on-oversize |
-| 12 CSP delivery | T5: header-delivered via vercel.json, external assets, XFO fallback |
-| 13 rewrite/MIME | Handler contract + MIME/rewrite tests; bidi/control rendering note in T5 |
-| 14 GET amplification | POST + custom header + Fetch Metadata + no CORS (T6); click-to-run |
-| 15 cache order/atomicity | Normative flow: cache-before-quota; atomic Lua admission |
-| 16 concurrency control | Active-scan lease + per-repo single-flight, TTL'd (T6) |
-| 17 IP derivation | `x-vercel-forwarded-for` only, `ipaddress` parse, /64, fail closed (T6) |
-| 18 post-cap spend | WAF + spend management as 3.4 acceptance criteria (T6 residual) |
-| 19 stdlib contract | §Interface handler contract; proxy-blind no-redirect opener (T1) |
-| 20 crux ordering | 3.2a runtime probe before build |
-| 21 preview enforceability | Deployment Protection required + asserted from the first deploy |
+**Round 1 (21 findings → v2, all carried into v3):** 1 worker containment (T4, §Isolation) ·
+2 fluid/state (§Concurrency) · 3 output caps (T12) · 4 worker secret (negotiated, §Isolation/T7) ·
+5 coverage manifest (T13) · 6 disclosure (§Result policy → ADR-0003) · 7 cache retention (§Result
+policy) · 8 identifier grammar (T1) · 9 codeload matrix (T11) · 10 link filter (T3) · 11 gzip
+metering (T2) · 12 CSP delivery (T5) · 13 rewrite/MIME (§Interface) · 14 GET amplification (T6) ·
+15 flow order (request flow) · 16 leases (T6) · 17 IP derivation (T6) · 18 spend (§Interface
+deploy-time) · 19 handler contract (§Interface) · 20 probe ordering (3.2a) · 21 protection (Goal).
+
+**Round 2 → v3:** partial 1 → per-file progress deadline (§Isolation, T4) · partial 6 →
+[ADR-0003](../adr/0003-hosted-output-publication-semantics.md) + plan amendment · partial 7 →
+hosted redaction boundary (§Result policy) · partial 9 → T11 defined outcomes · partial 11 →
+explicit metering boundary (T2) · partial 13 → codepoint escaping + bidi fixture (T5) · partial
+16 → lease numbers (T6) · partial 18 → WAF/spend numbers (§Interface) · partial 19 → body caps +
+response schemas (§Interface) · new 1 → request-level admission first (flow, T6) · new 2 →
+parent-boundary framing (§Isolation, T7, T12) · new 3 → revalidation state machine (§Result
+policy) · new 4 → uncharged 202 followers (flow, T6) · new 5 → body-byte cap (§Interface) ·
+new 6 → process-group kill + parent tmpdir (§Isolation) · new 7 → no-network boundary (§Arch) ·
+new 8 → plan §Phase 3 amended + ADR-0003 · negotiated-fix conditions → ACL-or-no-launch (T7,
+§Fallback) + parent-boundary hardening.

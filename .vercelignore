@@ -1,0 +1,6 @@
+# Deploy allowlist — the function bundle needs only the API, config, and (later) src/ + web/.
+*
+!api
+!api/**
+!requirements.txt
+!vercel.json

@@ -27,3 +27,6 @@ corpus/mutations/
 .coverage
 htmlcov/
 .ruff_cache/
+
+# vercel project link (machine-local)
+.vercel/

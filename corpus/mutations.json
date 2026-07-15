@@ -1,0 +1,2825 @@
+{
+  "version": 1,
+  "generated_by": "scripts/plant_mutations.py",
+  "note": "Labeled-by-construction. label=bad => a credential detector must fire on sink_line; label=good => it must NOT. Splits: tune (detector development), holdout (scored, never tuned on), negative (precision hard-cases). cross-function-hop is a known intra-file-taint MISS for v1 \u2014 its recall documents the limitation, it is not a bug.",
+  "splits": {
+    "tune": 108,
+    "holdout": 54,
+    "negative": 36
+  },
+  "classes": {
+    "direct-env-log": {
+      "split": "tune"
+    },
+    "aliased-log": {
+      "split": "tune"
+    },
+    "template-log": {
+      "split": "tune"
+    },
+    "secret-in-url": {
+      "split": "tune"
+    },
+    "secret-in-header": {
+      "split": "tune"
+    },
+    "secret-in-body": {
+      "split": "tune"
+    },
+    "cross-function-hop": {
+      "split": "holdout"
+    },
+    "hardcoded-token": {
+      "split": "holdout"
+    },
+    "secret-to-file": {
+      "split": "holdout"
+    },
+    "neg-name-not-value": {
+      "split": "negative"
+    },
+    "neg-path-not-secret": {
+      "split": "negative"
+    }
+  },
+  "counts": {
+    "total": 198,
+    "bad": 162,
+    "good": 36
+  },
+  "instances": [
+    {
+      "id": "m000",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m000.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m001",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m001.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m002",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m002.ts",
+      "sink_line": 4,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m003",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m003.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m004",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m004.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m005",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m005.ts",
+      "sink_line": 4,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m006",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m006.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m007",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m007.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m008",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m008.ts",
+      "sink_line": 4,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m009",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m009.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m010",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m010.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m011",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m011.ts",
+      "sink_line": 4,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m012",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m012.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m013",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m013.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m014",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m014.ts",
+      "sink_line": 4,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m015",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m015.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m016",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m016.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m017",
+      "class": "direct-env-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/direct-env-log/m017.ts",
+      "sink_line": 4,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m018",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m018.ts",
+      "sink_line": 7,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m019",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m019.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m020",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m020.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m021",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m021.ts",
+      "sink_line": 7,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m022",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m022.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m023",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m023.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m024",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m024.ts",
+      "sink_line": 7,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m025",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m025.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m026",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m026.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m027",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m027.ts",
+      "sink_line": 7,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m028",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m028.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m029",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m029.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m030",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m030.ts",
+      "sink_line": 7,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m031",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m031.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m032",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m032.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m033",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m033.ts",
+      "sink_line": 7,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m034",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m034.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m035",
+      "class": "aliased-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/aliased-log/m035.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m036",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m036.ts",
+      "sink_line": 7,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m037",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m037.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m038",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m038.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m039",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m039.ts",
+      "sink_line": 7,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m040",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m040.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m041",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m041.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m042",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m042.ts",
+      "sink_line": 7,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m043",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m043.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m044",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m044.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m045",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m045.ts",
+      "sink_line": 7,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m046",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m046.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m047",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m047.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m048",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m048.ts",
+      "sink_line": 7,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m049",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m049.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m050",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m050.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m051",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m051.ts",
+      "sink_line": 7,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m052",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m052.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m053",
+      "class": "template-log",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/template-log/m053.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m054",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m054.ts",
+      "sink_line": 7,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m055",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m055.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m056",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m056.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m057",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m057.ts",
+      "sink_line": 7,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m058",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m058.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m059",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m059.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m060",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m060.ts",
+      "sink_line": 7,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m061",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m061.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m062",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m062.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m063",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m063.ts",
+      "sink_line": 7,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m064",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m064.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m065",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m065.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m066",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m066.ts",
+      "sink_line": 7,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m067",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m067.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m068",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m068.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m069",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m069.ts",
+      "sink_line": 7,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m070",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m070.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m071",
+      "class": "secret-in-url",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-url/m071.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m072",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m072.ts",
+      "sink_line": 7,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m073",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m073.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m074",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m074.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m075",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m075.ts",
+      "sink_line": 7,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m076",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m076.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m077",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m077.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m078",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m078.ts",
+      "sink_line": 7,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m079",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m079.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m080",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m080.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m081",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m081.ts",
+      "sink_line": 7,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m082",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m082.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m083",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m083.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m084",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m084.ts",
+      "sink_line": 7,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m085",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m085.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m086",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m086.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m087",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m087.ts",
+      "sink_line": 7,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m088",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m088.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m089",
+      "class": "secret-in-header",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-header/m089.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m090",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m090.ts",
+      "sink_line": 7,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m091",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m091.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m092",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m092.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m093",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m093.ts",
+      "sink_line": 7,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m094",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m094.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m095",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m095.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m096",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m096.ts",
+      "sink_line": 7,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m097",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m097.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m098",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m098.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m099",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m099.ts",
+      "sink_line": 7,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m100",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m100.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m101",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m101.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m102",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m102.ts",
+      "sink_line": 7,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m103",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m103.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m104",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m104.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m105",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m105.ts",
+      "sink_line": 7,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m106",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m106.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m107",
+      "class": "secret-in-body",
+      "split": "tune",
+      "label": "bad",
+      "file": "tune/secret-in-body/m107.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m108",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m108.ts",
+      "sink_line": 8,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m109",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m109.ts",
+      "sink_line": 7,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m110",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m110.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m111",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m111.ts",
+      "sink_line": 8,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m112",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m112.ts",
+      "sink_line": 7,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m113",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m113.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m114",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m114.ts",
+      "sink_line": 8,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m115",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m115.ts",
+      "sink_line": 7,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m116",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m116.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m117",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m117.ts",
+      "sink_line": 8,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m118",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m118.ts",
+      "sink_line": 7,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m119",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m119.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m120",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m120.ts",
+      "sink_line": 8,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m121",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m121.ts",
+      "sink_line": 7,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m122",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m122.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m123",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m123.ts",
+      "sink_line": 8,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m124",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m124.ts",
+      "sink_line": 7,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m125",
+      "class": "cross-function-hop",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/cross-function-hop/m125.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m126",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m126.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m127",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m127.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m128",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m128.ts",
+      "sink_line": 4,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m129",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m129.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m130",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m130.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m131",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m131.ts",
+      "sink_line": 4,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m132",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m132.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m133",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m133.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m134",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m134.ts",
+      "sink_line": 4,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m135",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m135.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m136",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m136.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m137",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m137.ts",
+      "sink_line": 4,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m138",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m138.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m139",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m139.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m140",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m140.ts",
+      "sink_line": 4,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m141",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m141.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m142",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m142.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m143",
+      "class": "hardcoded-token",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/hardcoded-token/m143.ts",
+      "sink_line": 4,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m144",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m144.ts",
+      "sink_line": 7,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m145",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m145.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m146",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m146.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m147",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m147.ts",
+      "sink_line": 7,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m148",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m148.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m149",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m149.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m150",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m150.ts",
+      "sink_line": 7,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m151",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m151.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m152",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m152.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m153",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m153.ts",
+      "sink_line": 7,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m154",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m154.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m155",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m155.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m156",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m156.ts",
+      "sink_line": 7,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m157",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m157.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m158",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m158.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m159",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m159.ts",
+      "sink_line": 7,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m160",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m160.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m161",
+      "class": "secret-to-file",
+      "split": "holdout",
+      "label": "bad",
+      "file": "holdout/secret-to-file/m161.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m162",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m162.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m163",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m163.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m164",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m164.ts",
+      "sink_line": 4,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m165",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m165.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m166",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m166.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m167",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m167.ts",
+      "sink_line": 4,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m168",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m168.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m169",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m169.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m170",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m170.ts",
+      "sink_line": 4,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m171",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m171.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m172",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m172.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m173",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m173.ts",
+      "sink_line": 4,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m174",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m174.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m175",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m175.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m176",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m176.ts",
+      "sink_line": 4,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m177",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m177.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m178",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m178.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m179",
+      "class": "neg-name-not-value",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-name-not-value/m179.ts",
+      "sink_line": 4,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m180",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m180.ts",
+      "sink_line": 7,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m181",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m181.ts",
+      "sink_line": 6,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m182",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m182.ts",
+      "sink_line": 5,
+      "env": "API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m183",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m183.ts",
+      "sink_line": 7,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m184",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m184.ts",
+      "sink_line": 6,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m185",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m185.ts",
+      "sink_line": 5,
+      "env": "GITHUB_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m186",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m186.ts",
+      "sink_line": 7,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m187",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m187.ts",
+      "sink_line": 6,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m188",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m188.ts",
+      "sink_line": 5,
+      "env": "SLACK_BOT_TOKEN",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    },
+    {
+      "id": "m189",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m189.ts",
+      "sink_line": 7,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "const",
+        "host": 0
+      }
+    },
+    {
+      "id": "m190",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m190.ts",
+      "sink_line": 6,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "let",
+        "host": 1
+      }
+    },
+    {
+      "id": "m191",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m191.ts",
+      "sink_line": 5,
+      "env": "DATABASE_URL",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "destructure",
+        "host": 2
+      }
+    },
+    {
+      "id": "m192",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m192.ts",
+      "sink_line": 7,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "let",
+        "host": 0
+      }
+    },
+    {
+      "id": "m193",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m193.ts",
+      "sink_line": 6,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "destructure",
+        "host": 1
+      }
+    },
+    {
+      "id": "m194",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m194.ts",
+      "sink_line": 5,
+      "env": "STRIPE_SECRET_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "const",
+        "host": 2
+      }
+    },
+    {
+      "id": "m195",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m195.ts",
+      "sink_line": 7,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.log",
+        "assign": "destructure",
+        "host": 0
+      }
+    },
+    {
+      "id": "m196",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m196.ts",
+      "sink_line": 6,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.error",
+        "assign": "const",
+        "host": 1
+      }
+    },
+    {
+      "id": "m197",
+      "class": "neg-path-not-secret",
+      "split": "negative",
+      "label": "good",
+      "file": "negative/neg-path-not-secret/m197.ts",
+      "sink_line": 5,
+      "env": "OPENAI_API_KEY",
+      "idiom": {
+        "sink": "console.warn",
+        "assign": "let",
+        "host": 2
+      }
+    }
+  ],
+  "tree_sha256": "85c32736b6f515abacbf030c48dc284c3e94627639b5b69111b3538024a33ad7"
+}

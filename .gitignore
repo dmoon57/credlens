@@ -12,8 +12,9 @@ build/
 *.pem
 *.key
 
-# Scan working dirs (corpus clones are re-fetched, never committed)
+# Scan working dirs — corpus clones re-fetched, mutations regenerated; never committed
 corpus/servers/
+corpus/mutations/
 .scan-cache/
 
 # OS / editor

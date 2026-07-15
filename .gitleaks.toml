@@ -1,15 +1,24 @@
 # credlens gitleaks config — default rules, plus a narrow allowlist for security-test
-# fixtures that carry PLANTED, CLEARLY-FAKE secrets by design (positive controls and the
-# mutation corpus). Never widen these paths to real source or config.
+# fixtures that carry PLANTED, CLEARLY-FAKE secrets by design (positive controls, the
+# mutation corpus, and the generator that emits them). Never widen these paths to real
+# source or config.
 
 [extend]
 useDefault = true
 
 [[allowlists]]
-description = "Planted fake secrets in fixtures: POC synthetic control + its findings snapshot, future mutation corpus"
+description = "Paths that legitimately contain planted, clearly-fake fixture secrets"
 paths = [
   '''docs/research/poc/synthetic-control/.*''',
   '''docs/research/poc/findings\.json''',
+  '''scripts/plant_mutations\.py''',
   '''corpus/mutations/.*''',
   '''tests/fixtures/.*''',
+]
+
+[[allowlists]]
+description = "Defanged fixture token literals — always carry a FAKE/EXAMPLE marker"
+regexTarget = "line"
+regexes = [
+  '''(FAKE|EXAMPLE)''',
 ]

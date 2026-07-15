@@ -37,3 +37,6 @@ extend-exclude = ["docs"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.vercel]
+entrypoint = "api.probe:handler"

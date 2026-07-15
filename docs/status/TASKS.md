@@ -2,7 +2,7 @@
 type: status
 title: "credlens — tasks"
 created_date: 2026-07-14
-last_modified: 2026-07-14 20:42 PDT
+last_modified: 2026-07-14 23:05 PDT
 ---
 
 # Tasks
@@ -45,8 +45,13 @@ last_modified: 2026-07-14 20:42 PDT
   plan §Phase 3 amendment
 - [x] 3.1d Codex round 3: **APPROVE-WITH-CHANGES** — 7 should-fix + 2 nits folded as spec v3.1;
   **3.1 gate CLOSED** (21 → 9+8 → 0 blocking across three rounds)
-- [ ] 3.2a Runtime probe, Deployment-Protection-enabled: wheel imports, worker kill semantics,
-  /tmp, fluid:false, maxDuration, T11 upstream matrix. Kill criterion: probe fails ⇒ fallback
+- [~] 3.2a Runtime probe — **deployed & protected 2026-07-14 ~21:00** (`moonman/credlens`,
+  preview `credlens-rheukmtlq`, Vercel Auth `all_except_custom_domains` + app-level token gate;
+  unauthenticated denial asserted: 302→SSO). **Proven:** wheels install on the runtime (build
+  green); T11 codeload matrix run (normal 200+gzip · nonexistent 404 · **rename served
+  transparently as 200** — documented residual, matrix updated · huge repo early-abort OK).
+  **Outstanding:** one authenticated invocation for the runtime-side checks (worker group-kill,
+  /tmp, runtime env) — needs operator's browser session or approved protection-bypass secret
 - [ ] 3.2b Scan core, local: shared `scan.py` walker factor-out + `hosted/` fetch/streamed-extract/
   limits/worker, TDD against adversarial fixtures — no network in tests
 - [ ] 3.3 Web surface, local: handler contract + static pages/assets + atomic quotas +

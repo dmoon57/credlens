@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "created": "2026-07-14",
+  "description": "Pinned eval corpus: 21 real MCP reference servers (7 from modelcontextprotocol/servers, 14 from servers-archived) + 1 in-repo synthetic positive control. Assembled into corpus/servers/ by scripts/fetch_corpus.py (make corpus); byte-reproducibility is enforced by tree_sha256.",
+  "sources": [
+    {
+      "name": "servers",
+      "url": "https://github.com/modelcontextprotocol/servers.git",
+      "sha": "d31124c982401739917fd817c2a59db344529c16",
+      "mirror": "https://github.com/dmoon57/credlens/releases/download/corpus-v1/servers-d31124c-src.tar.gz",
+      "servers": [
+        "everything",
+        "fetch",
+        "filesystem",
+        "git",
+        "memory",
+        "sequentialthinking",
+        "time"
+      ]
+    },
+    {
+      "name": "servers-archived",
+      "url": "https://github.com/modelcontextprotocol/servers-archived.git",
+      "sha": "9be4674d1ddf8c469e6461a27a337eeb65f76c2e",
+      "mirror": "https://github.com/dmoon57/credlens/releases/download/corpus-v1/servers-archived-9be4674-src.tar.gz",
+      "servers": [
+        "aws-kb-retrieval-server",
+        "brave-search",
+        "everart",
+        "gdrive",
+        "git",
+        "github",
+        "gitlab",
+        "google-maps",
+        "postgres",
+        "puppeteer",
+        "redis",
+        "sentry",
+        "slack",
+        "sqlite"
+      ]
+    }
+  ],
+  "local": [
+    {
+      "name": "synthetic-control",
+      "path": "docs/research/poc/synthetic-control"
+    }
+  ],
+  "tree_sha256": "c6528b7fa44c062793912ea6720a57bea3aedca5b87e4298588347cbc43565ae"
+}

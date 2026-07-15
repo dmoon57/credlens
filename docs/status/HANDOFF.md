@@ -2,7 +2,7 @@
 type: status
 title: "credlens — handoff"
 created_date: 2026-07-14
-last_modified: 2026-07-14 20:50 PDT
+last_modified: 2026-07-14 23:17 PDT
 ---
 
 # Handoff
@@ -11,8 +11,15 @@ last_modified: 2026-07-14 20:50 PDT
 launch post drafted); hosted scan-by-URL + ecosystem scan + data-story draft by 2026-07-27.
 Full plan: [../plan/plan.md](../plan/plan.md).
 
-**Phase:** 3 (hosted scan-by-URL) — **milestone 3.1 (spec + adversarial gate) COMPLETE** 2026-07-14
-evening. Phases 0 + 1 + 2 completed earlier the same day.
+**Phase:** 3 (hosted scan-by-URL) — **3.1 (spec + adversarial gate) and 3.2a (runtime probe) both
+COMPLETE** 2026-07-14 evening. Phases 0 + 1 + 2 completed earlier the same day.
+
+**3.2a probe result (PASSED):** protected preview deploy proved, on the real Vercel runtime (iad1,
+Python 3.12.13, x86_64, /tmp 512 MB): tree-sitter wheels install + all 3 grammars parse · worker
+process-group kill takes the whole tree (rc=-9, zero survivors) · /tmp roundtrip+cleanup · T11
+codeload matrix. **One owed deploy-gate action:** project defaults `fluid: true`, not API-settable
+on the current CLI → disable at 3.4 (dashboard/newer CLI); the code-level per-request detector
+guarantee is what actually enforces isolation.
 
 **Done (Phase 3 · 3.1):**
 - Threat-model-first spec: [../specs/hosted-scan.md](../specs/hosted-scan.md) — 13-row threat
@@ -26,14 +33,17 @@ evening. Phases 0 + 1 + 2 completed earlier the same day.
 - Feasibility de-risked early: all four tree-sitter packages resolve as manylinux/abi3 x86_64
   wheels for CPython 3.12 (~2.4 MB).
 
-**Exact next step (3.2a — needs operator approval, it deploys):** the protected runtime probe —
-minimal Vercel deploy behind Deployment Protection proving wheel imports, worker group-kill
-semantics, /tmp, `fluid: false`, `maxDuration`, + the T11 upstream matrix. Kill criterion: any
-undefined/unsafe outcome ⇒ pre-committed static-demo fallback. Then 3.2b (schema file first, then
-scan core TDD vs adversarial fixtures), 3.3 (web surface), 3.4 (protected preview → full `/cso` →
-operator approval → public). **Preconditions to track:** Upstash Redis + ACL-scoped token
-(`credlens:` prefix) — ACL is a public-launch precondition (DECISIONS.md); default token =
-preview-only.
+**Exact next step (3.2b — local, no approvals):** (a) author `docs/specs/hosted-scan-schema.json`
+(closed versioned response/frame schema); (b) build adversarial tarball fixtures in an isolated
+context (traversal · abs-path · internal-symlink · hardlink-farm · gzip-bomb · 6000-file ·
+oversize-member · duplicate-path · overlong-name · crash-source · hanging-parser · worker-death ·
+result-bomb · planted-token · XSS-payload · bidi/control); (c) TDD the scan core — `src/credlens/
+scan.py` walker factor-out + `src/credlens/hosted/` (fetch, streamed metered extract, limits,
+killable worker protocol, redaction) — against the fixtures, no network in tests. Then 3.3 (web
+surface + Upstash provisioning), 3.4 (protected preview → full `/cso` → operator approval → public).
+**Preconditions to track:** Upstash Redis + ACL-scoped token (`credlens:` prefix) — ACL is a
+public-launch precondition (DECISIONS.md); default token = preview-only. **Owed 3.4 config:**
+disable Fluid Compute (see above).
 
 ---
 

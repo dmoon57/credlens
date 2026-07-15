@@ -2,7 +2,7 @@
 type: status
 title: "credlens — tasks"
 created_date: 2026-07-14
-last_modified: 2026-07-14 23:05 PDT
+last_modified: 2026-07-14 23:17 PDT
 ---
 
 # Tasks
@@ -45,13 +45,15 @@ last_modified: 2026-07-14 23:05 PDT
   plan §Phase 3 amendment
 - [x] 3.1d Codex round 3: **APPROVE-WITH-CHANGES** — 7 should-fix + 2 nits folded as spec v3.1;
   **3.1 gate CLOSED** (21 → 9+8 → 0 blocking across three rounds)
-- [~] 3.2a Runtime probe — **deployed & protected 2026-07-14 ~21:00** (`moonman/credlens`,
-  preview `credlens-rheukmtlq`, Vercel Auth `all_except_custom_domains` + app-level token gate;
-  unauthenticated denial asserted: 302→SSO). **Proven:** wheels install on the runtime (build
-  green); T11 codeload matrix run (normal 200+gzip · nonexistent 404 · **rename served
-  transparently as 200** — documented residual, matrix updated · huge repo early-abort OK).
-  **Outstanding:** one authenticated invocation for the runtime-side checks (worker group-kill,
-  /tmp, runtime env) — needs operator's browser session or approved protection-bypass secret
+- [x] 3.2a Runtime probe — **PASSED 2026-07-14 23:10** (`moonman/credlens`, protected preview
+  `credlens-rheukmtlq`; unauthenticated denial asserted: 302→SSO). Authenticated report (iad1,
+  Python 3.12.13, x86_64, /tmp 512 MB): wheels install + all 3 grammars parse · **worker
+  group-kill: rc=-9, zero group survivors, own session** · /tmp 1 MiB roundtrip + cleanup ·
+  T11 codeload matrix (normal 200+gzip · nonexistent 404 · **rename transparent-200** = documented
+  residual · huge 200). Provenance: `scratchpad/probe-3.2a-report.json`.
+- [ ] **3.2a owed deploy-gate action:** project defaults `fluid: true`; not settable via v9 API on
+  the current CLI → disable Fluid Compute at 3.4 (dashboard toggle / newer CLI). Code-level
+  per-request detector instances are the enforced guarantee; no public ship until fluid is off.
 - [ ] 3.2b Scan core, local: shared `scan.py` walker factor-out + `hosted/` fetch/streamed-extract/
   limits/worker, TDD against adversarial fixtures — no network in tests
 - [ ] 3.3 Web surface, local: handler contract + static pages/assets + atomic quotas +

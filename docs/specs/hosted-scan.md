@@ -3,7 +3,7 @@ type: spec
 title: "Hosted scan-by-URL (Phase 3)"
 status: active
 created_date: 2026-07-14
-last_modified: 2026-07-14 23:05 PDT
+last_modified: 2026-07-14 23:17 PDT
 tags: [mcp, security, deploy, vercel, threat-model]
 ---
 
@@ -83,10 +83,14 @@ detection logic — the published eval numbers describe exactly the hosted code.
 (3.2a) before the core build**. Vercel Python runtime is Beta — priced by the probe and the
 always-green fallback.
 
-**Concurrency model (r1 #2):** `fluid: false` for v1 — one invocation per process. No detector
-instance or mutable scan state at module scope; detectors constructed per request (they mutate
-internal state, e.g. `_src`, during a scan). A two-repo concurrent test asserts unique markers
-never cross results.
+**Concurrency model (r1 #2):** the **enforced** guarantee is per-request detector construction —
+no detector instance or mutable scan state at module scope (they mutate internal state, e.g.
+`_src`, during a scan), asserted by a two-repo concurrent test. `fluid: false` is the
+belt-and-suspenders project toggle on top of that. **Probe finding (3.2a, 2026-07-14): the Vercel
+project defaults to `fluid: true` and the toggle is not settable via the v9 projects API on the
+current CLI** — so disabling Fluid Compute is an **owed 3.4 deploy-gate action** (dashboard toggle
+or a newer `vercel` CLI), tracked in TASKS. v1 does not ship publicly until it's off; the code-level
+per-request guarantee holds regardless.
 
 **Isolation (r1 #1/#4 negotiated; r2 accepted-for-v1 with conditions):** extraction + parsing —
 everything touching hostile bytes — runs in a **separately killable worker subprocess**:

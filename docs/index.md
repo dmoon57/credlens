@@ -14,3 +14,5 @@ last_modified: 2026-07-14 15:09 PDT
   test log, review notes.
 - [research/](research/index.md) — the validation research and proof-of-concept that seeded this
   project.
+- [positioning.md](positioning.md) — honest competitive map: where the real gap is vs. Claude Code,
+  dedicated MCP scanners, and general-purpose SAST; the two narrative claims to retire before publishing.

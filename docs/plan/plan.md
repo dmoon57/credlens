@@ -3,7 +3,7 @@ type: plan
 title: "credlens v1 — evals-first build plan"
 status: active
 created_date: 2026-07-14
-last_modified: 2026-07-14 20:42 PDT
+last_modified: 2026-07-23 14:05 PDT
 tags: [mcp, security, evals, static-analysis]
 ---
 
@@ -136,3 +136,17 @@ serverless limits → move the scan worker to a job queue behind the same front.
 - Fresh-clone `make eval` reproduces the published numbers.
 - The synthetic control scans end-to-end through whatever surface exists (CLI now, URL later).
 - The CI regression gate demonstrated red-then-green on a deliberately planted regression.
+
+## Future / post-v1 roadmap (unplanned — grill before detailing)
+
+Captured ideas, **not** yet scoped. Each needs a grilling session before it earns a phase, a spec, or
+acceptance criteria — do not build or plan details from these lines alone.
+
+1. **Generalize the scan surface.** Broaden *what* credlens can scan beyond the current pinned corpus
+   / hosted-tarball path — arbitrary local code and MCP servers, more languages/idioms, and the
+   inputs a real user would point it at. Open question: how far the precision guarantee generalizes
+   off the pinned corpus.
+2. **User-facing workflows.** A supported way for someone else to run credlens in their own workflow
+   — e.g. a local `credlens scan <dir>` CLI, packaging/distribution, and/or CI integration. Today the
+   engine is only reachable via the eval harness and the internal hosted worker; there is no
+   documented end-user entrypoint. Open question: CLI vs hosted vs library as the primary surface.
